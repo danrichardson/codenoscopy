@@ -1,0 +1,41 @@
+[33mcommit abeeee79701507bfdc634f53b22989074e77974f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Daniel Richardson <plymptonia@yahoo.com>
+Date:   Fri Feb 13 22:36:27 2026 -0800
+
+    Initial release: AI-powered code review with persona selection
+
+[33mcommit 532b6e301089b1a74617e31fcd9402660c0aaa35[m
+Author: Daniel Richardson <plymptonia@yahoo.com>
+Date:   Fri Feb 13 22:31:58 2026 -0800
+
+    More flourishes
+
+[33mcommit b4490a18b2bc5917eb4c3d0e9b34a8d7663d4d36[m
+Author: Daniel Richardson <plymptonia@yahoo.com>
+Date:   Fri Feb 13 22:23:23 2026 -0800
+
+    Tweak
+
+[33mcommit e315a41d50a15b850c861e072fda6301563be201[m
+Author: Daniel Richardson <plymptonia@yahoo.com>
+Date:   Fri Feb 13 22:19:01 2026 -0800
+
+    Add flourish
+
+[33mcommit b2042c975d1e574b5c885b2204937a38b2d68fdd[m
+Author: Daniel Richardson <plymptonia@yahoo.com>
+Date:   Fri Feb 13 21:56:07 2026 -0800
+
+    No routes :-(
+
+[33mcommit 5d510dbc3d628d49038fa2500279490f2516aace[m
+Author: Daniel Richardson <plymptonia@yahoo.com>
+Date:   Fri Feb 13 21:53:51 2026 -0800
+
+    added routes
+
+[33mcommit 78146e266faf580d8cea17b010ad49b8044a8098[m
+Author: Daniel Richardson <plymptonia@yahoo.com>
+Date:   Fri Feb 13 21:08:49 2026 -0800
+
+    Refactor of codenoscopy
