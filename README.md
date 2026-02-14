@@ -7,6 +7,7 @@ AI-powered code review with personality. Paste or upload code, pick a reviewer p
 - **Frontend**: Vite + React (static, served by Cloudflare Pages)
 - **Backend**: Cloudflare Pages Functions (serverless, calls Anthropic API)
 - **Hosting**: Cloudflare Pages with custom domain `codenoscopy.com`
+- **CI/CD**: Auto-deploys on push to `main` via Cloudflare Git integration
 
 ## Local Development
 
@@ -34,11 +35,8 @@ cp .dev.vars.example .dev.vars
 # Start both Vite dev server and Wrangler functions
 npm run dev:all
 
-# Frontend: http://localhost:3000
-# Functions: http://localhost:8788
+# Access via http://localhost:8788 (Wrangler proxies to Vite for static assets)
 ```
-
-Vite proxies `/api/*` requests to Wrangler during development.
 
 ### Build
 
@@ -56,35 +54,37 @@ npm run preview
 
 ## Deployment
 
-### First time setup
+Deployment is automatic. Push to `main` and Cloudflare Pages builds and deploys.
 
 ```bash
-# Login to Cloudflare
-npx wrangler login
-
-# Create the Pages project
-npx wrangler pages project create codenoscopy
-
-# Set the API key as a secret
-npx wrangler pages secret put ANTHROPIC_API_KEY
+git add .
+git commit -m "your changes"
+git push
 ```
 
-### Deploy
+Pushes to other branches create preview deployments with unique URLs.
 
-```bash
-npm run deploy
-```
+### Environment Variables
 
-### Custom domain
+The `ANTHROPIC_API_KEY` must be set in the Cloudflare dashboard:
 
-In the Cloudflare dashboard, go to Pages > codenoscopy > Custom domains and add `codenoscopy.com`. Since DNS is already on Cloudflare, it will configure automatically.
+Workers & Pages → codenoscopy → Settings → Environment variables
+
+### Initial Setup (already done)
+
+The Pages project was created in the Cloudflare dashboard by connecting to the `danrichardson/codenoscopy` GitHub repo with these build settings:
+
+- **Build command**: `npm run build`
+- **Build output directory**: `dist`
+
+Custom domains (`codenoscopy.com` and `www.codenoscopy.com`) are configured via CNAME records pointing to `codenoscopy.pages.dev`.
 
 ## Project Structure
 
 ```
 codenoscopy/
 ├── src/                    # React frontend
-│   ├── App.jsx             # Main component
+│   ├── App.jsx             # Main component (custom persona dropdown)
 │   ├── App.css             # Styles
 │   ├── main.jsx            # Entry point
 │   └── index.css           # Global styles
@@ -96,7 +96,7 @@ codenoscopy/
 ├── public/                 # Static assets
 ├── index.html              # HTML entry point
 ├── vite.config.js          # Vite configuration
-├── wrangler.toml           # Cloudflare config
+├── wrangler.toml           # Cloudflare Pages config
 ├── package.json
 └── .dev.vars.example       # Template for local API key
 ```
