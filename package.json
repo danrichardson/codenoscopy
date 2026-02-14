@@ -1,0 +1,24 @@
+{
+  "name": "codenoscopy",
+  "version": "2.0.0",
+  "private": true,
+  "description": "AI-powered code review with personality — deployed on Cloudflare Pages",
+  "scripts": {
+    "dev": "vite",
+    "dev:functions": "wrangler pages dev dist --port 8788 --compatibility-date=2024-01-01",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:functions\"",
+    "build": "vite build",
+    "preview": "wrangler pages dev dist",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=codenoscopy"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "concurrently": "^8.2.2",
+    "vite": "^5.0.0",
+    "wrangler": "^4.65.0"
+  }
+}
