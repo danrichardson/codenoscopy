@@ -1,0 +1,6 @@
+name = "codenoscopy"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+# Set ANTHROPIC_API_KEY via Cloudflare dashboard or:
+#   wrangler pages secret put ANTHROPIC_API_KEY
