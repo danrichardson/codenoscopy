@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
+import remarkGfm from 'remark-gfm';
 import './App.css';
 
 const DEFAULT_CODE = `def digit_fingerprint(n):
@@ -281,7 +284,14 @@ function App() {
 
               <div className="panel">
                 <h3>Review</h3>
-                <div className="review-display">{review.review}</div>
+                <div className="review-display">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeSanitize]}
+                  >
+                    {review.review}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           </div>
