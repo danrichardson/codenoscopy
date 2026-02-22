@@ -15,10 +15,10 @@
 ### Functions API
 - [x] `GET /api/health` returns `{ status: "ok" }`
 - [x] `GET /api/personas` returns expected persona list shape
-- [ ] `POST /api/review` rejects missing code/persona with 400
-- [ ] `POST /api/review` rejects invalid persona with 400
-- [ ] `POST /api/review` maps model IDs correctly
-- [ ] `POST /api/review` handles Anthropic non-200 response
+- [x] `POST /api/review` rejects missing code/persona with 400
+- [x] `POST /api/review` rejects invalid persona with 400
+- [x] `POST /api/review` maps model IDs correctly
+- [x] `POST /api/review` handles Anthropic non-200 response
 - [ ] `POST /api/review` handles malformed JSON body
 
 ## New Functionality (Planned)
@@ -32,7 +32,7 @@
 - [x] `mailto:dan@throughlinetech.net` link is present and valid
 
 ### Streaming Reviews
-- [ ] Review text progressively appears during API stream
+- [x] Review text progressively appears during API stream
 - [ ] Stream cancellation/error transitions to user-friendly error state
 
 ### Persona Randomness
