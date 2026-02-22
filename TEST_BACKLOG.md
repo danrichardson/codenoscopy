@@ -20,6 +20,8 @@
 - [x] `POST /api/review` maps model IDs correctly
 - [x] `POST /api/review` handles Anthropic non-200 response
 - [x] `POST /api/review` handles malformed JSON body
+- [x] `POST /api/review` rejects oversized code input
+- [x] `POST /api/review` rate limits repeated requests by IP
 
 ## New Functionality (Planned)
 

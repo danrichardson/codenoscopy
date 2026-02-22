@@ -158,6 +158,52 @@ const RANDOM_FORMATS = [
   'Use a collaborative dialogue tone with recommendations and tradeoffs.'
 ];
 
+const rateLimitStore = new Map();
+
+const getNumericEnv = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const getClientIp = (request) => {
+  const cfIp = request.headers.get('cf-connecting-ip');
+  if (cfIp) {
+    return cfIp;
+  }
+
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+
+  return 'unknown';
+};
+
+const checkRateLimit = (request, env) => {
+  const limit = getNumericEnv(env.RATE_LIMIT_MAX_REQUESTS, 20);
+  const windowMs = getNumericEnv(env.RATE_LIMIT_WINDOW_MS, 60000);
+  const ip = getClientIp(request);
+  const now = Date.now();
+  const key = `${ip}:${Math.floor(now / windowMs)}`;
+
+  const currentCount = rateLimitStore.get(key) || 0;
+  if (currentCount >= limit) {
+    const nextWindowEpochMs = (Math.floor(now / windowMs) + 1) * windowMs;
+    return {
+      limited: true,
+      retryAfterSeconds: Math.max(1, Math.ceil((nextWindowEpochMs - now) / 1000))
+    };
+  }
+
+  rateLimitStore.set(key, currentCount + 1);
+  return { limited: false, retryAfterSeconds: 0 };
+};
+
+const exceedsInputLimit = (code, env) => {
+  const maxChars = getNumericEnv(env.MAX_CODE_CHARS, 120000);
+  return code.length > maxChars;
+};
+
 const sampleWithoutReplacement = (items, count) => {
   const selected = new Set();
   while (selected.size < count) {
@@ -180,6 +226,21 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   try {
+    const rateLimitResult = checkRateLimit(request, env);
+    if (rateLimitResult.limited) {
+      return Response.json(
+        {
+          error: `Rate limit exceeded. Try again in ${rateLimitResult.retryAfterSeconds}s.`
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimitResult.retryAfterSeconds)
+          }
+        }
+      );
+    }
+
     let payload;
 
     try {
@@ -190,8 +251,17 @@ export async function onRequestPost(context) {
 
     const { code, persona, model, stream } = payload;
 
-    if (!code || !persona) {
+    if (!code || !code.trim() || !persona) {
       return Response.json({ error: 'Code and persona are required' }, { status: 400 });
+    }
+
+    if (exceedsInputLimit(code, env)) {
+      return Response.json(
+        {
+          error: `Code input is too large. Maximum allowed size is ${getNumericEnv(env.MAX_CODE_CHARS, 120000)} characters.`
+        },
+        { status: 413 }
+      );
     }
 
     if (!PERSONAS[persona]) {
@@ -256,3 +326,9 @@ export async function onRequestPost(context) {
     );
   }
 }
+
+export const __testOnly = {
+  resetRateLimitStore: () => {
+    rateLimitStore.clear();
+  }
+};
