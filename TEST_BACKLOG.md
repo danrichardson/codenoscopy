@@ -6,11 +6,11 @@
 - [x] App renders title and primary controls
 - [x] Personas load from `/api/personas`
 - [x] Review submission calls `/api/review` and displays result
-- [ ] Error message appears when review API returns non-OK
-- [ ] Upload file populates code input
-- [ ] Clear button resets review and input state
-- [ ] Persona dropdown keyboard accessibility
-- [ ] Model selector updates request payload
+- [x] Error message appears when review API returns non-OK
+- [x] Upload file populates code input
+- [x] Clear button resets review and input state
+- [x] Persona dropdown keyboard accessibility
+- [x] Model selector updates request payload
 
 ### Functions API
 - [x] `GET /api/health` returns `{ status: "ok" }`
@@ -19,7 +19,7 @@
 - [x] `POST /api/review` rejects invalid persona with 400
 - [x] `POST /api/review` maps model IDs correctly
 - [x] `POST /api/review` handles Anthropic non-200 response
-- [ ] `POST /api/review` handles malformed JSON body
+- [x] `POST /api/review` handles malformed JSON body
 
 ## New Functionality (Planned)
 
@@ -33,7 +33,7 @@
 
 ### Streaming Reviews
 - [x] Review text progressively appears during API stream
-- [ ] Stream cancellation/error transitions to user-friendly error state
+- [x] Stream cancellation/error transitions to user-friendly error state
 
 ### Persona Randomness
 - [x] Prompt variation modifies focus areas/mood/format

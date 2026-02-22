@@ -36,6 +36,8 @@ const MODELS = [
   { id: 'sonnet', name: 'Sonnet 4.5 (Balanced)' },
 ];
 
+const REVIEW_TIMEOUT_MS = 90000;
+
 const FEATURE_HISTORY = [
   {
     date: '2026-02-22',
@@ -100,7 +102,14 @@ const readReviewStream = async (response, onTextDelta) => {
   let buffer = '';
 
   while (true) {
-    const { done, value } = await reader.read();
+    let readResult;
+    try {
+      readResult = await reader.read();
+    } catch {
+      throw new Error('STREAM_INTERRUPTED');
+    }
+
+    const { done, value } = readResult;
     if (done) {
       break;
     }
@@ -117,6 +126,25 @@ const readReviewStream = async (response, onTextDelta) => {
   if (buffer) {
     appendStreamChunk(buffer, onTextDelta);
   }
+};
+
+const getReviewErrorMessage = (error, didReceivePartial) => {
+  if (error?.name === 'AbortError') {
+    return 'The review timed out. Please try again or use a shorter input.';
+  }
+
+  if (error?.message === 'STREAM_INTERRUPTED') {
+    if (didReceivePartial) {
+      return 'Connection interrupted. Showing the partial review received so far.';
+    }
+    return 'Connection interrupted while streaming the review. Please try again.';
+  }
+
+  if (error?.message?.includes('Failed to fetch')) {
+    return 'Network error while requesting review. Check your connection and try again.';
+  }
+
+  return error?.message || 'Failed to get review';
 };
 
 function App() {
@@ -192,15 +220,21 @@ function App() {
     setError(null);
     setReview(null);
 
+    let timeoutId;
+    let didReceivePartial = false;
+
     try {
       const personaName = personas.find((item) => item.id === selectedPersona)?.name || selectedPersona;
       const modelName = MODELS.find((item) => item.id === selectedModel)?.name || selectedModel;
+      const abortController = new AbortController();
+      timeoutId = setTimeout(() => abortController.abort(), REVIEW_TIMEOUT_MS);
 
       const response = await fetch('/api/review', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: abortController.signal,
         body: JSON.stringify({
           code,
           persona: selectedPersona,
@@ -224,6 +258,7 @@ function App() {
         });
 
         await readReviewStream(response, (text) => {
+          didReceivePartial = true;
           setReview((previous) => {
             if (!previous) {
               return {
@@ -239,14 +274,23 @@ function App() {
             };
           });
         });
+
+        if (!didReceivePartial) {
+          throw new Error('STREAM_INTERRUPTED');
+        }
       } else {
         const data = await response.json();
         setReview(data);
       }
     } catch (err) {
-      setError(err.message);
-      setReview(null);
+      setError(getReviewErrorMessage(err, didReceivePartial));
+      if (!didReceivePartial) {
+        setReview(null);
+      }
     } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       setIsLoading(false);
     }
   };
@@ -317,22 +361,50 @@ function App() {
               <div className="control-group">
                 <label>Reviewer Persona</label>
                 <div className="custom-select-wrapper" ref={personaRef}>
-                  <div
+                  <button
+                    type="button"
                     className="custom-select"
                     onClick={() => setPersonaDropdownOpen(!personaDropdownOpen)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        setPersonaDropdownOpen(true);
+                      }
+
+                      if (event.key === 'Escape') {
+                        setPersonaDropdownOpen(false);
+                      }
+                    }}
+                    aria-expanded={personaDropdownOpen}
+                    aria-haspopup="listbox"
+                    aria-controls="persona-options-listbox"
                   >
                     <span>{personas.find(p => p.id === selectedPersona)?.name || 'Select...'}</span>
                     <span className="custom-select-arrow">▾</span>
-                  </div>
+                  </button>
                   {personaDropdownOpen && (
-                    <div className="custom-select-options">
+                    <div className="custom-select-options" role="listbox" id="persona-options-listbox">
                       {personas.map(persona => (
                         <div
                           key={persona.id}
                           className={`custom-select-option ${persona.id === selectedPersona ? 'selected' : ''}`}
+                          role="option"
+                          tabIndex={0}
+                          aria-selected={persona.id === selectedPersona}
                           onClick={() => {
                             setSelectedPersona(persona.id);
                             setPersonaDropdownOpen(false);
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setSelectedPersona(persona.id);
+                              setPersonaDropdownOpen(false);
+                            }
+
+                            if (event.key === 'Escape') {
+                              setPersonaDropdownOpen(false);
+                            }
                           }}
                           onMouseEnter={() => handlePersonaHover(persona)}
                         >
@@ -416,6 +488,7 @@ function App() {
           </div>
         ) : (
           <div className="results-section">
+            {error && <div className="error">{error}</div>}
             <div className="results-header">
               <div>
                 <h2>Review by {review.persona}</h2>
