@@ -99,4 +99,38 @@ describe('POST /api/review', () => {
     const data = await response.json();
     expect(data.error).toContain('Failed to get review from Claude');
   });
+
+  it('injects dynamic persona directives into system prompt', async () => {
+    const randomSpy = vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0.0)
+      .mockReturnValueOnce(0.3)
+      .mockReturnValueOnce(0.0)
+      .mockReturnValueOnce(0.0);
+
+    fetch.mockResolvedValueOnce(new Response(JSON.stringify({
+      content: [{ text: 'Review text' }]
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+
+    const response = await onRequestPost(buildContext({
+      code: 'print(1)',
+      persona: 'security-expert',
+      model: 'haiku',
+      stream: false,
+    }));
+
+    expect(response.status).toBe(200);
+    const anthropicCall = fetch.mock.calls[0];
+    const requestBody = JSON.parse(anthropicCall[1].body);
+
+    expect(requestBody.system).toContain('Dynamic review directives');
+    expect(requestBody.system).toContain('Focus areas:');
+    expect(requestBody.system).toContain('Mood:');
+    expect(requestBody.system).toContain('Format:');
+
+    randomSpy.mockRestore();
+  });
 });
