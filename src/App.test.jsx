@@ -187,4 +187,143 @@ describe('App', () => {
     expect(screen.getByText('Streaming responses enabled')).toBeInTheDocument();
     expect(screen.getByText('Persona prompt randomness')).toBeInTheDocument();
   });
+
+  it('shows an error when review API returns non-OK', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+      if (url === '/api/personas') {
+        return new Response(JSON.stringify(personas), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (url === '/api/review' && options?.method === 'POST') {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }));
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    expect(await screen.findByText('Rate limit exceeded')).toBeInTheDocument();
+  });
+
+  it('updates request payload when model changes', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const modelSelect = await screen.findByLabelText('Model');
+    await user.selectOptions(modelSelect, 'sonnet');
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    const reviewCall = fetch.mock.calls.find(([url]) => url === '/api/review');
+    const requestPayload = JSON.parse(reviewCall[1].body);
+    expect(requestPayload.model).toBe('sonnet');
+  });
+
+  it('loads uploaded file content into code input', async () => {
+    const originalFileReader = globalThis.FileReader;
+
+    class MockFileReader {
+      readAsText() {
+        this.onload({ target: { result: 'print("uploaded")' } });
+      }
+    }
+
+    vi.stubGlobal('FileReader', MockFileReader);
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const fileInput = await screen.findByLabelText('Upload File');
+    const file = new File(['print("hello")'], 'example.py', { type: 'text/plain' });
+    await user.upload(fileInput, file);
+
+    const codeInput = screen.getByPlaceholderText('Paste your code here...');
+    expect(codeInput).toHaveValue('print("uploaded")');
+
+    if (originalFileReader) {
+      vi.stubGlobal('FileReader', originalFileReader);
+    }
+  });
+
+  it('resets code input when clear is clicked', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const codeInput = await screen.findByPlaceholderText('Paste your code here...');
+    await user.clear(codeInput);
+    await user.type(codeInput, 'custom code');
+
+    const clearButton = screen.getByRole('button', { name: 'Clear' });
+    await user.click(clearButton);
+
+    expect(codeInput.value).toContain('def digit_fingerprint(n):');
+  });
+
+  it('supports keyboard interaction on persona dropdown', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await screen.findByText('Reviewer Persona');
+    const personaToggle = document.querySelector('.custom-select');
+    expect(personaToggle).toBeTruthy();
+    await user.click(personaToggle);
+
+    const option = await screen.findByRole('option', { name: 'Bug Hunter' });
+    option.focus();
+    await user.keyboard('{Enter}');
+
+    expect(screen.getByText('Bug Hunter')).toBeInTheDocument();
+  });
+
+  it('shows user-friendly message when stream is interrupted', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+      if (url === '/api/personas') {
+        return new Response(JSON.stringify(personas), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (url === '/api/review' && options?.method === 'POST') {
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.error(new Error('boom'));
+          }
+        });
+
+        return new Response(stream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }));
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    expect(await screen.findByText('Connection interrupted while streaming the review. Please try again.')).toBeInTheDocument();
+  });
 });
