@@ -43,6 +43,27 @@
   border-bottom: 1px solid #e8e8e8;
 }
 
+.branding-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.theme-toggle {
+  border: 1px solid #d9dcf8;
+  background: #f4f5ff;
+  color: #5568d3;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: #e9ecff;
+}
+
 .branding-link {
   color: #667eea;
   font-size: 0.95rem;
@@ -589,4 +610,113 @@
 
 .footer-note a:hover {
   text-decoration: underline;
+}
+
+.app.theme-dark .container {
+  background: #151923;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+.app.theme-dark .branding-bar {
+  border-bottom-color: #2e3547;
+}
+
+.app.theme-dark .title,
+.app.theme-dark .results-header h2 {
+  color: #8ea0ff;
+}
+
+.app.theme-dark .subtitle,
+.app.theme-dark .footer-note,
+.app.theme-dark .feature-history li p,
+.app.theme-dark .loading-text,
+.app.theme-dark .model-badge {
+  color: #b9c1d8;
+}
+
+.app.theme-dark .control-group label,
+.app.theme-dark .panel h3,
+.app.theme-dark .feature-history li strong,
+.app.theme-dark .review-display,
+.app.theme-dark .code-display,
+.app.theme-dark .custom-select,
+.app.theme-dark .persona-select {
+  color: #e8ecfb;
+}
+
+.app.theme-dark .feature-history {
+  background: #1c2333;
+  border-color: #2f3a53;
+}
+
+.app.theme-dark .feature-history-toggle,
+.app.theme-dark .feature-history-date,
+.app.theme-dark .branding-link,
+.app.theme-dark .footer-note a,
+.app.theme-dark .custom-select-arrow {
+  color: #9aa9ff;
+}
+
+.app.theme-dark .theme-toggle {
+  border-color: #3a4564;
+  background: #242d44;
+  color: #c7d1ff;
+}
+
+.app.theme-dark .theme-toggle:hover {
+  background: #2a3550;
+}
+
+.app.theme-dark .custom-select,
+.app.theme-dark .persona-select,
+.app.theme-dark .code-editor-wrapper,
+.app.theme-dark .review-display,
+.app.theme-dark .code-display,
+.app.theme-dark .results-header,
+.app.theme-dark .panel h3,
+.app.theme-dark .error,
+.app.theme-dark .custom-select-options {
+  border-color: #36405c;
+}
+
+.app.theme-dark .custom-select,
+.app.theme-dark .persona-select,
+.app.theme-dark .custom-select-options,
+.app.theme-dark .review-display,
+.app.theme-dark .code-display,
+.app.theme-dark .model-badge,
+.app.theme-dark .btn-secondary,
+.app.theme-dark .file-upload-label {
+  background: #20283a;
+}
+
+.app.theme-dark .custom-select-option:hover,
+.app.theme-dark .btn-secondary:hover:not(:disabled) {
+  background: #2b3550;
+}
+
+.app.theme-dark .btn-secondary {
+  color: #e6ebff;
+}
+
+.app.theme-dark .file-upload-label,
+.app.theme-dark .btn-primary,
+.app.theme-dark .custom-select-option.selected {
+  background: #5d74ff;
+}
+
+.app.theme-dark .btn-primary:hover:not(:disabled),
+.app.theme-dark .file-upload-label:hover {
+  background: #4f67ea;
+}
+
+.app.theme-dark .code-editor-wrapper:focus-within,
+.app.theme-dark .custom-select:hover,
+.app.theme-dark .persona-select:focus {
+  border-color: #7f92ff;
+}
+
+.app.theme-dark .error {
+  background: #3a1f2b;
+  color: #ffb3cb;
 }
