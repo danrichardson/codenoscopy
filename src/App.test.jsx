@@ -161,6 +161,17 @@ describe('App', () => {
     expect(emailLinks[0]).toHaveAttribute('href', 'mailto:dan@throughlinetech.net');
   });
 
+  it('keeps splash layout state before review starts', async () => {
+    render(<App />);
+
+    await screen.findByText('Codenoscopy');
+
+    const appRoot = document.querySelector('.app');
+    const container = document.querySelector('.container');
+    expect(appRoot).not.toHaveClass('review-mode');
+    expect(container).not.toHaveClass('review-mode');
+  });
+
   it('shows feature history entries in the app shell', async () => {
     const user = userEvent.setup();
     render(<App />);
