@@ -137,7 +137,7 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   try {
-    const { code, persona, model } = await request.json();
+    const { code, persona, model, stream } = await request.json();
 
     if (!code || !persona) {
       return Response.json({ error: 'Code and persona are required' }, { status: 400 });
@@ -160,6 +160,7 @@ export async function onRequestPost(context) {
       body: JSON.stringify({
         model: selectedModel.id,
         max_tokens: 4096,
+        stream: Boolean(stream),
         system: selectedPersona.systemPrompt,
         messages: [
           {
@@ -174,6 +175,17 @@ export async function onRequestPost(context) {
       const errorData = await response.text();
       console.error('Anthropic API error:', errorData);
       return Response.json({ error: 'Failed to get review from Claude' }, { status: 502 });
+    }
+
+    if (stream) {
+      return new Response(response.body, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
+        }
+      });
     }
 
     const data = await response.json();

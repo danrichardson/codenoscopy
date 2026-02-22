@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -37,6 +37,7 @@ describe('App', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
   });
 
@@ -53,8 +54,58 @@ describe('App', () => {
       expect(fetch).toHaveBeenCalledWith('/api/review', expect.objectContaining({ method: 'POST' }));
     });
 
+    const reviewCall = fetch.mock.calls.find(([url]) => url === '/api/review');
+    const requestPayload = JSON.parse(reviewCall[1].body);
+    expect(requestPayload.stream).toBe(true);
+
     expect(await screen.findByText('Review by Security Expert')).toBeInTheDocument();
     expect(screen.getByText('Looks good overall, but add input validation.')).toBeInTheDocument();
+  });
+
+  it('renders streamed review text progressively', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+      if (url === '/api/personas') {
+        return new Response(JSON.stringify(personas), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (url === '/api/review' && options?.method === 'POST') {
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(
+              'event: content_block_delta\n' +
+              'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Hello "}}\n\n'
+            ));
+            controller.enqueue(new TextEncoder().encode(
+              'event: content_block_delta\n' +
+              'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"world"}}\n\n'
+            ));
+            controller.close();
+          }
+        });
+
+        return new Response(stream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }));
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    expect(await screen.findByText('Review by Security Expert')).toBeInTheDocument();
+    expect(await screen.findByText('Hello world')).toBeInTheDocument();
   });
 
   it('renders markdown review safely', async () => {
