@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
@@ -38,7 +41,17 @@ const MODELS = [
 
 const REVIEW_TIMEOUT_MS = 90000;
 
+const EDITOR_LANGUAGES = {
+  python: python(),
+  javascript: javascript(),
+};
+
 const FEATURE_HISTORY = [
+  {
+    date: '2026-02-22',
+    title: 'Syntax-highlighted editor upgrade',
+    details: 'Replaced plain textarea with CodeMirror editor including line numbers and language-aware highlighting.'
+  },
   {
     date: '2026-02-22',
     title: 'API hardening: input limits + rate limiting',
@@ -83,6 +96,26 @@ const FEATURE_HISTORY = [
 
 const _transform = (name) => {
   return String.fromCharCode(name.charCodeAt(0) - 9) + 'ean' + name.slice(4);
+};
+
+const detectEditorLanguage = (inputCode, fileName = '') => {
+  const normalizedFile = fileName.toLowerCase();
+  if (normalizedFile.endsWith('.py')) {
+    return 'python';
+  }
+  if (normalizedFile.endsWith('.js') || normalizedFile.endsWith('.jsx') || normalizedFile.endsWith('.ts') || normalizedFile.endsWith('.tsx')) {
+    return 'javascript';
+  }
+
+  const trimmed = inputCode.trim();
+  if (trimmed.includes('def ') || trimmed.includes('import ') || trimmed.includes('if __name__ ==')) {
+    return 'python';
+  }
+  if (trimmed.includes('function ') || trimmed.includes('const ') || trimmed.includes('=>')) {
+    return 'javascript';
+  }
+
+  return 'python';
 };
 
 const appendStreamChunk = (payload, onTextDelta) => {
@@ -179,6 +212,7 @@ function App() {
   const [review, setReview] = useState(null);
   const [error, setError] = useState(null);
   const [showPlaceholder, setShowPlaceholder] = useState(true);
+  const [editorLanguage, setEditorLanguage] = useState('python');
   const [personaDropdownOpen, setPersonaDropdownOpen] = useState(false);
   const [flashingPersona, setFlashingPersona] = useState(null);
   const [isFeatureHistoryOpen, setIsFeatureHistoryOpen] = useState(false);
@@ -218,7 +252,9 @@ function App() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setCode(event.target.result);
+        const uploadedCode = event.target.result;
+        setCode(uploadedCode);
+        setEditorLanguage(detectEditorLanguage(uploadedCode, file.name));
         setShowPlaceholder(false);
       };
       reader.readAsText(file);
@@ -368,6 +404,7 @@ function App() {
   const handleClearAll = () => {
     cancelActiveReview();
     setCode(DEFAULT_CODE);
+    setEditorLanguage('python');
     setShowPlaceholder(true);
     setReview(null);
     setError(null);
@@ -512,13 +549,23 @@ function App() {
               </div>
             </div>
 
-            <textarea
-              className="code-input"
-              placeholder="Paste your code here..."
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              onFocus={handleCodeFocus}
-            />
+            <div className="code-editor-wrapper" data-testid="code-editor-wrapper">
+              <CodeMirror
+                value={code}
+                height="420px"
+                theme="light"
+                basicSetup={{
+                  lineNumbers: true,
+                  highlightActiveLine: true,
+                  highlightActiveLineGutter: true,
+                  foldGutter: true,
+                }}
+                extensions={[EDITOR_LANGUAGES[editorLanguage]]}
+                onFocus={handleCodeFocus}
+                onChange={(value) => setCode(value)}
+                placeholder="Paste your code here..."
+              />
+            </div>
 
             {error && <div className="error">{error}</div>}
 
