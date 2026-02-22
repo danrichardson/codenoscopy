@@ -3,6 +3,26 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
+vi.mock('@uiw/react-codemirror', () => ({
+  default: ({ value, onChange, onFocus, placeholder }) => (
+    <textarea
+      className="code-input"
+      placeholder={placeholder}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      onFocus={onFocus}
+    />
+  )
+}));
+
+vi.mock('@codemirror/lang-python', () => ({
+  python: () => ({})
+}));
+
+vi.mock('@codemirror/lang-javascript', () => ({
+  javascript: () => ({})
+}));
+
 const personas = [
   { id: 'security-expert', name: 'Security Expert' },
   { id: 'bug-hunter', name: 'Bug Hunter' },
@@ -46,6 +66,7 @@ describe('App', () => {
     render(<App />);
 
     expect(await screen.findByText('Codenoscopy')).toBeInTheDocument();
+    expect(screen.getByTestId('code-editor-wrapper')).toBeInTheDocument();
 
     const reviewButton = await screen.findByRole('button', { name: 'Review!' });
     await user.click(reviewButton);
