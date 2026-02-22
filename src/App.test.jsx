@@ -159,9 +159,16 @@ describe('App', () => {
   });
 
   it('shows feature history entries in the app shell', async () => {
+    const user = userEvent.setup();
     render(<App />);
 
-    expect(await screen.findByRole('heading', { name: 'Feature History' })).toBeInTheDocument();
+    const toggle = await screen.findByRole('button', { name: 'Feature History' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Review output renders as Markdown')).not.toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('Review output renders as Markdown')).toBeInTheDocument();
     expect(screen.getByText('Streaming responses enabled')).toBeInTheDocument();
     expect(screen.getByText('Persona prompt randomness')).toBeInTheDocument();
