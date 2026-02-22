@@ -496,6 +496,7 @@
 }
 
 .custom-select {
+  width: 100%;
   padding: 0.75rem;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
@@ -505,6 +506,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  text-align: left;
+  font-family: inherit;
   transition: border-color 0.3s;
 }
 
