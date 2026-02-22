@@ -151,12 +151,26 @@ const RANDOM_MOODS = [
   'You are preparing this feedback for a high-stakes production release review.'
 ];
 
+const RANDOM_MOODS_HARSH = [
+  'You are conducting a strict gatekeeper review with zero tolerance for weak engineering decisions.',
+  'You are reviewing code that repeatedly failed quality gates and must enforce uncompromising standards.',
+  'You are evaluating this for a high-risk production release where harsh technical scrutiny is expected.'
+];
+
 const RANDOM_FORMATS = [
   'Use concise bullet points with severity labels.',
   'Use a short narrative summary followed by concrete action items.',
   'Use a scored rubric across correctness, safety, maintainability, and performance.',
   'Use a collaborative dialogue tone with recommendations and tradeoffs.'
 ];
+
+const RANDOM_FORMATS_HARSH = [
+  'Use concise bullet points with severity labels.',
+  'Use a scored rubric across correctness, safety, maintainability, and performance.',
+  'Use a strict issue list ordered by severity with non-negotiable fix requirements.'
+];
+
+const HARSH_PERSONA_IDS = new Set(['mean', 'meaner', 'meanest']);
 
 const rateLimitStore = new Map();
 
@@ -213,13 +227,28 @@ const sampleWithoutReplacement = (items, count) => {
   return Array.from(selected);
 };
 
-const buildDynamicSystemPrompt = (basePrompt) => {
+const getVariationPools = (personaId) => {
+  if (HARSH_PERSONA_IDS.has(personaId)) {
+    return {
+      moods: RANDOM_MOODS_HARSH,
+      formats: RANDOM_FORMATS_HARSH,
+    };
+  }
+
+  return {
+    moods: RANDOM_MOODS,
+    formats: RANDOM_FORMATS,
+  };
+};
+
+const buildDynamicSystemPrompt = (basePrompt, personaId) => {
+  const { moods, formats } = getVariationPools(personaId);
   const focusCount = Math.random() < 0.5 ? 2 : 3;
   const selectedFocus = sampleWithoutReplacement(RANDOM_FOCUS_AREAS, focusCount);
-  const selectedMood = RANDOM_MOODS[Math.floor(Math.random() * RANDOM_MOODS.length)];
-  const selectedFormat = RANDOM_FORMATS[Math.floor(Math.random() * RANDOM_FORMATS.length)];
+  const selectedMood = moods[Math.floor(Math.random() * moods.length)];
+  const selectedFormat = formats[Math.floor(Math.random() * formats.length)];
 
-  return `${basePrompt}\n\nDynamic review directives (vary each run):\n- Focus areas: ${selectedFocus.join('; ')}\n- Mood: ${selectedMood}\n- Format: ${selectedFormat}`;
+  return `${basePrompt}\n\nDynamic review directives (vary each run):\n- Focus areas: ${selectedFocus.join('; ')}\n- Mood: ${selectedMood}\n- Format: ${selectedFormat}\n- Constraint: Keep style consistent with the persona description above.`;
 };
 
 export async function onRequestPost(context) {
@@ -282,7 +311,7 @@ export async function onRequestPost(context) {
         model: selectedModel.id,
         max_tokens: 4096,
         stream: Boolean(stream),
-        system: buildDynamicSystemPrompt(selectedPersona.systemPrompt),
+        system: buildDynamicSystemPrompt(selectedPersona.systemPrompt, persona),
         messages: [
           {
             role: 'user',
@@ -330,5 +359,6 @@ export async function onRequestPost(context) {
 export const __testOnly = {
   resetRateLimitStore: () => {
     rateLimitStore.clear();
-  }
+  },
+  buildDynamicSystemPrompt,
 };
