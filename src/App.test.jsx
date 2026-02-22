@@ -273,6 +273,55 @@ describe('App', () => {
     expect(requestPayload.model).toBe('sonnet');
   });
 
+  it('runs panel review across multiple personas', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+      if (url === '/api/personas') {
+        return new Response(JSON.stringify(personas), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (url === '/api/review' && options?.method === 'POST') {
+        const payload = JSON.parse(options.body);
+        const personaName = personas.find((persona) => persona.id === payload.persona)?.name || payload.persona;
+        return new Response(JSON.stringify({
+          review: `Panel result from ${personaName}`,
+          persona: personaName,
+          model: 'Haiku 4.5 (Fast)'
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }));
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const panelToggle = await screen.findByLabelText('Enable 2-3 persona parallel review');
+    await user.click(panelToggle);
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    expect(await screen.findByText('Panel Review (2 personas)')).toBeInTheDocument();
+    expect(screen.getByText('Panel result from Security Expert')).toBeInTheDocument();
+    expect(screen.getByText('Panel result from Bug Hunter')).toBeInTheDocument();
+
+    const reviewCalls = fetch.mock.calls.filter(([url]) => url === '/api/review');
+    expect(reviewCalls.length).toBe(2);
+    reviewCalls.forEach(([, request]) => {
+      const payload = JSON.parse(request.body);
+      expect(payload.stream).toBe(false);
+    });
+  });
+
   it('loads uploaded file content into code input', async () => {
     const originalFileReader = globalThis.FileReader;
 

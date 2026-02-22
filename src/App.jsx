@@ -51,6 +51,11 @@ const EDITOR_LANGUAGES = {
 const FEATURE_HISTORY = [
   {
     date: '2026-02-22',
+    title: 'Panel review mode',
+    details: 'Run 2-3 personas in parallel and compare reviews side-by-side.'
+  },
+  {
+    date: '2026-02-22',
     title: 'Dark mode toggle',
     details: 'Added persisted dark/light theme toggle with editor theme switching.'
   },
@@ -230,14 +235,17 @@ function App() {
   const [selectedModel, setSelectedModel] = useState('haiku');
   const [isLoading, setIsLoading] = useState(false);
   const [review, setReview] = useState(null);
+  const [panelReviews, setPanelReviews] = useState([]);
   const [error, setError] = useState(null);
   const [showPlaceholder, setShowPlaceholder] = useState(true);
   const [editorLanguage, setEditorLanguage] = useState('python');
+  const [isPanelMode, setIsPanelMode] = useState(false);
+  const [panelPersonaIds, setPanelPersonaIds] = useState([]);
   const [personaDropdownOpen, setPersonaDropdownOpen] = useState(false);
   const [flashingPersona, setFlashingPersona] = useState(null);
   const [isFeatureHistoryOpen, setIsFeatureHistoryOpen] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme);
-  const isReviewMode = Boolean(review) || isLoading;
+  const isReviewMode = Boolean(review) || panelReviews.length > 0 || isLoading;
 
   useEffect(() => {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -250,6 +258,7 @@ function App() {
         setPersonas(data);
         if (data.length > 0) {
           setSelectedPersona(data[0].id);
+          setPanelPersonaIds(data.slice(0, 2).map((persona) => persona.id));
         }
       })
       .catch(err => console.error('Failed to fetch personas:', err));
@@ -312,6 +321,52 @@ function App() {
     setIsLoading(true);
     setError(null);
     setReview(null);
+    setPanelReviews([]);
+
+    if (isPanelMode) {
+      const selectedPanelPersonas = panelPersonaIds.slice(0, 3);
+
+      if (selectedPanelPersonas.length < 2) {
+        setError('Select at least 2 personas for panel review.');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const requests = await Promise.all(
+          selectedPanelPersonas.map(async (personaId) => {
+            const response = await fetch('/api/review', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                code,
+                persona: personaId,
+                model: selectedModel,
+                stream: false,
+              })
+            });
+
+            if (!response.ok) {
+              const errData = await response.json().catch(() => ({}));
+              throw new Error(errData.error || 'Failed to get panel review');
+            }
+
+            return response.json();
+          })
+        );
+
+        setPanelReviews(requests);
+      } catch (err) {
+        setError(getReviewErrorMessage(err, false));
+        setPanelReviews([]);
+      } finally {
+        setIsLoading(false);
+      }
+
+      return;
+    }
 
     let timeoutId;
     let didReceivePartial = false;
@@ -423,6 +478,7 @@ function App() {
   const handleClearResults = () => {
     cancelActiveReview();
     setReview(null);
+    setPanelReviews([]);
     setError(null);
   };
 
@@ -432,7 +488,22 @@ function App() {
     setEditorLanguage('python');
     setShowPlaceholder(true);
     setReview(null);
+    setPanelReviews([]);
     setError(null);
+  };
+
+  const togglePanelPersona = (personaId) => {
+    setPanelPersonaIds((current) => {
+      if (current.includes(personaId)) {
+        return current.filter((id) => id !== personaId);
+      }
+
+      if (current.length >= 3) {
+        return current;
+      }
+
+      return [...current, personaId];
+    });
   };
 
   return (
@@ -493,9 +564,27 @@ function App() {
           )}
         </section>
 
-        {!review ? (
+        {!review && panelReviews.length === 0 ? (
           <div className="input-section">
             <div className="controls">
+              <div className="control-group panel-mode-group">
+                <label htmlFor="panel-mode-toggle">Panel Review</label>
+                <label className="panel-toggle-label" htmlFor="panel-mode-toggle">
+                  <input
+                    id="panel-mode-toggle"
+                    type="checkbox"
+                    checked={isPanelMode}
+                    onChange={(event) => {
+                      setIsPanelMode(event.target.checked);
+                      setReview(null);
+                      setPanelReviews([]);
+                      setError(null);
+                    }}
+                  />
+                  Enable 2-3 persona parallel review
+                </label>
+              </div>
+
               <div className="control-group">
                 <label>Reviewer Persona</label>
                 <div className="custom-select-wrapper" ref={personaRef}>
@@ -582,6 +671,24 @@ function App() {
                   />
                 </label>
               </div>
+
+              {isPanelMode && (
+                <div className="control-group panel-persona-group">
+                  <label>Panel Personas (max 3)</label>
+                  <div className="panel-persona-list">
+                    {personas.map((persona) => (
+                      <label key={persona.id} className="panel-persona-item">
+                        <input
+                          type="checkbox"
+                          checked={panelPersonaIds.includes(persona.id)}
+                          onChange={() => togglePanelPersona(persona.id)}
+                        />
+                        <span>{persona.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="code-editor-wrapper" data-testid="code-editor-wrapper">
@@ -633,6 +740,40 @@ function App() {
                 <p className="loading-text">Analyzing your code...</p>
               </div>
             )}
+          </div>
+        ) : panelReviews.length > 0 ? (
+          <div className="results-section">
+            {error && <div className="error">{error}</div>}
+            <div className="results-header">
+              <div>
+                <h2>Panel Review ({panelReviews.length} personas)</h2>
+                <span className="model-badge">{MODELS.find((model) => model.id === selectedModel)?.name || selectedModel}</span>
+              </div>
+              <div className="button-group">
+                <button className="btn btn-secondary" onClick={handleClearResults}>
+                  Try Another Panel
+                </button>
+                <button className="btn btn-secondary" onClick={handleClearAll}>
+                  Start Over
+                </button>
+              </div>
+            </div>
+
+            <div className="panel-review-grid">
+              {panelReviews.map((panelReview) => (
+                <div className="panel" key={panelReview.persona}>
+                  <h3>{panelReview.persona}</h3>
+                  <div className="review-display">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeSanitize]}
+                    >
+                      {panelReview.review}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="results-section">
