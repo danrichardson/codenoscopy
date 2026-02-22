@@ -41,6 +41,11 @@ const REVIEW_TIMEOUT_MS = 90000;
 const FEATURE_HISTORY = [
   {
     date: '2026-02-22',
+    title: 'API hardening: input limits + rate limiting',
+    details: 'Added server-side code-size validation and per-IP request throttling for review endpoint protection.'
+  },
+  {
+    date: '2026-02-22',
     title: 'Review layout refinement',
     details: 'Review mode now expands left with balanced code/review panel widths and smoother panel entrance.'
   },

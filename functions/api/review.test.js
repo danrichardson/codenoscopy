@@ -1,23 +1,34 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { onRequestPost } from './review';
+import { __testOnly, onRequestPost } from './review';
 
-const env = { ANTHROPIC_API_KEY: 'test-key' };
+const env = {
+  ANTHROPIC_API_KEY: 'test-key',
+  MAX_CODE_CHARS: '20',
+  RATE_LIMIT_MAX_REQUESTS: '2',
+  RATE_LIMIT_WINDOW_MS: '60000'
+};
 
-const buildContext = (body) => ({
+const buildContext = (body, ip = '203.0.113.1') => ({
   env,
   request: new Request('http://localhost/api/review', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'cf-connecting-ip': ip,
+    },
     body: JSON.stringify(body),
   }),
 });
 
-const buildRawContext = (rawBody) => ({
+const buildRawContext = (rawBody, ip = '203.0.113.1') => ({
   env,
   request: new Request('http://localhost/api/review', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'cf-connecting-ip': ip,
+    },
     body: rawBody,
   }),
 });
@@ -28,6 +39,7 @@ describe('POST /api/review', () => {
   });
 
   afterEach(() => {
+    __testOnly.resetRateLimitStore();
     vi.unstubAllGlobals();
   });
 
@@ -53,6 +65,19 @@ describe('POST /api/review', () => {
     expect(response.status).toBe(400);
     const data = await response.json();
     expect(data.error).toContain('Invalid JSON body');
+  });
+
+  it('rejects oversized code input', async () => {
+    const response = await onRequestPost(buildContext({
+      code: '123456789012345678901',
+      persona: 'security-expert',
+      model: 'haiku',
+      stream: false,
+    }));
+
+    expect(response.status).toBe(413);
+    const data = await response.json();
+    expect(data.error).toContain('Maximum allowed size');
   });
 
   it('returns JSON review for non-stream requests', async () => {
@@ -149,5 +174,33 @@ describe('POST /api/review', () => {
     expect(requestBody.system).toContain('Format:');
 
     randomSpy.mockRestore();
+  });
+
+  it('rate limits repeated requests from the same IP', async () => {
+    fetch.mockImplementation(async () => new Response(JSON.stringify({
+      content: [{ text: 'Review text' }]
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+
+    const basePayload = {
+      code: 'print(1)',
+      persona: 'security-expert',
+      model: 'haiku',
+      stream: false,
+    };
+
+    const first = await onRequestPost(buildContext(basePayload, '198.51.100.7'));
+    const second = await onRequestPost(buildContext(basePayload, '198.51.100.7'));
+    const third = await onRequestPost(buildContext(basePayload, '198.51.100.7'));
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(third.status).toBe(429);
+
+    const data = await third.json();
+    expect(data.error).toContain('Rate limit exceeded');
+    expect(third.headers.get('Retry-After')).toBeTruthy();
   });
 });
