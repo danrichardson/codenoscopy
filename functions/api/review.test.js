@@ -13,6 +13,15 @@ const buildContext = (body) => ({
   }),
 });
 
+const buildRawContext = (rawBody) => ({
+  env,
+  request: new Request('http://localhost/api/review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: rawBody,
+  }),
+});
+
 describe('POST /api/review', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn());
@@ -36,6 +45,14 @@ describe('POST /api/review', () => {
     expect(response.status).toBe(400);
     const data = await response.json();
     expect(data.error).toContain('Invalid persona');
+  });
+
+  it('rejects malformed JSON body', async () => {
+    const response = await onRequestPost(buildRawContext('{"code":'));
+
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toContain('Invalid JSON body');
   });
 
   it('returns JSON review for non-stream requests', async () => {

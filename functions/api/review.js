@@ -180,7 +180,15 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   try {
-    const { code, persona, model, stream } = await request.json();
+    let payload;
+
+    try {
+      payload = await request.json();
+    } catch {
+      return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { code, persona, model, stream } = payload;
 
     if (!code || !persona) {
       return Response.json({ error: 'Code and persona are required' }, { status: 400 });
