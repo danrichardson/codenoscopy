@@ -36,6 +36,29 @@ const MODELS = [
   { id: 'sonnet', name: 'Sonnet 4.5 (Balanced)' },
 ];
 
+const FEATURE_HISTORY = [
+  {
+    date: '2026-02-22',
+    title: 'Review output renders as Markdown',
+    details: 'Reviews now support headings, lists, and code blocks with sanitized rendering.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Streaming responses enabled',
+    details: 'Review text appears progressively instead of waiting for the entire response.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Persona prompt randomness',
+    details: 'Each review varies by focus areas, mood, and feedback format for less repetitive output.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Throughline Tech branding links',
+    details: 'Added site and email links for direct contact and project attribution.'
+  },
+];
+
 const _transform = (name) => {
   return String.fromCharCode(name.charCodeAt(0) - 9) + 'ean' + name.slice(4);
 };
@@ -257,6 +280,21 @@ function App() {
 
         <h1 className="title">Codenoscopy</h1>
         <p className="subtitle">AI-powered code review with personality</p>
+
+        <section className="feature-history" aria-label="Feature History">
+          <h2>Feature History</h2>
+          <ul>
+            {FEATURE_HISTORY.map((entry) => (
+              <li key={`${entry.date}-${entry.title}`}>
+                <span className="feature-history-date">{entry.date}</span>
+                <div>
+                  <strong>{entry.title}</strong>
+                  <p>{entry.details}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         {!review ? (
           <div className="input-section">
