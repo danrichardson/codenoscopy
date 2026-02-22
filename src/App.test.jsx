@@ -56,4 +56,42 @@ describe('App', () => {
     expect(await screen.findByText('Review by Security Expert')).toBeInTheDocument();
     expect(screen.getByText('Looks good overall, but add input validation.')).toBeInTheDocument();
   });
+
+  it('renders markdown review safely', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+      if (url === '/api/personas') {
+        return new Response(JSON.stringify(personas), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (url === '/api/review' && options?.method === 'POST') {
+        return new Response(JSON.stringify({
+          review: '## Findings\n\n- Item one\n\n```js\nconsole.log("test")\n```\n\n<script>alert("x")</script>',
+          persona: 'Security Expert',
+          model: 'Haiku 4.5 (Fast)'
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }));
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    expect(await screen.findByRole('heading', { name: 'Findings' })).toBeInTheDocument();
+    expect(screen.getByText('Item one')).toBeInTheDocument();
+    expect(screen.getByText('console.log("test")')).toBeInTheDocument();
+    expect(document.querySelector('script')).toBeNull();
+  });
 });
