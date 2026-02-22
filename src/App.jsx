@@ -40,6 +40,62 @@ const _transform = (name) => {
   return String.fromCharCode(name.charCodeAt(0) - 9) + 'ean' + name.slice(4);
 };
 
+const appendStreamChunk = (payload, onTextDelta) => {
+  if (!payload) {
+    return;
+  }
+
+  const lines = payload.split('\n');
+  let dataLine = '';
+
+  for (const line of lines) {
+    if (line.startsWith('data:')) {
+      dataLine += line.slice(5).trim();
+    }
+  }
+
+  if (!dataLine) {
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(dataLine);
+    if (parsed?.type === 'content_block_delta' && parsed?.delta?.text) {
+      onTextDelta(parsed.delta.text);
+    }
+  } catch {
+  }
+};
+
+const readReviewStream = async (response, onTextDelta) => {
+  if (!response.body) {
+    throw new Error('Streaming response did not include a body');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    const chunks = buffer.split('\n\n');
+    buffer = chunks.pop() ?? '';
+
+    for (const chunk of chunks) {
+      appendStreamChunk(chunk, onTextDelta);
+    }
+  }
+
+  if (buffer) {
+    appendStreamChunk(buffer, onTextDelta);
+  }
+};
+
 function App() {
   const personaRef = useRef(null);
   const [code, setCode] = useState(DEFAULT_CODE);
@@ -112,6 +168,9 @@ function App() {
     setReview(null);
 
     try {
+      const personaName = personas.find((item) => item.id === selectedPersona)?.name || selectedPersona;
+      const modelName = MODELS.find((item) => item.id === selectedModel)?.name || selectedModel;
+
       const response = await fetch('/api/review', {
         method: 'POST',
         headers: {
@@ -121,6 +180,7 @@ function App() {
           code,
           persona: selectedPersona,
           model: selectedModel,
+          stream: true,
         })
       });
 
@@ -129,10 +189,38 @@ function App() {
         throw new Error(errData.error || 'Failed to get review');
       }
 
-      const data = await response.json();
-      setReview(data);
+      const contentType = response.headers.get('content-type') || '';
+
+      if (contentType.includes('text/event-stream')) {
+        setReview({
+          review: '',
+          persona: personaName,
+          model: modelName,
+        });
+
+        await readReviewStream(response, (text) => {
+          setReview((previous) => {
+            if (!previous) {
+              return {
+                review: text,
+                persona: personaName,
+                model: modelName,
+              };
+            }
+
+            return {
+              ...previous,
+              review: previous.review + text,
+            };
+          });
+        });
+      } else {
+        const data = await response.json();
+        setReview(data);
+      }
     } catch (err) {
       setError(err.message);
+      setReview(null);
     } finally {
       setIsLoading(false);
     }
