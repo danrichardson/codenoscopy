@@ -132,6 +132,7 @@ function App() {
   const [personaDropdownOpen, setPersonaDropdownOpen] = useState(false);
   const [flashingPersona, setFlashingPersona] = useState(null);
   const [isFeatureHistoryOpen, setIsFeatureHistoryOpen] = useState(false);
+  const isReviewMode = Boolean(review) || isLoading;
 
   useEffect(() => {
     fetch('/api/personas')
@@ -263,8 +264,8 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <div className="container">
+    <div className={`app ${isReviewMode ? 'review-mode' : ''}`}>
+      <div className={`container ${isReviewMode ? 'review-mode' : ''}`}>
         <div className="branding-bar">
           <a
             href="https://throughlinetech.net"
@@ -436,7 +437,7 @@ function App() {
                 <pre className="code-display">{code}</pre>
               </div>
 
-              <div className="panel">
+              <div className="panel review-panel">
                 <h3>Review</h3>
                 <div className="review-display">
                   <ReactMarkdown

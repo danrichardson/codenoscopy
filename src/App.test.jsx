@@ -60,6 +60,9 @@ describe('App', () => {
 
     expect(await screen.findByText('Review by Security Expert')).toBeInTheDocument();
     expect(screen.getByText('Looks good overall, but add input validation.')).toBeInTheDocument();
+
+    const appRoot = document.querySelector('.app');
+    expect(appRoot).toHaveClass('review-mode');
   });
 
   it('renders streamed review text progressively', async () => {
