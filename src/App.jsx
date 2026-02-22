@@ -131,6 +131,7 @@ function App() {
   const [showPlaceholder, setShowPlaceholder] = useState(true);
   const [personaDropdownOpen, setPersonaDropdownOpen] = useState(false);
   const [flashingPersona, setFlashingPersona] = useState(null);
+  const [isFeatureHistoryOpen, setIsFeatureHistoryOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/personas')
@@ -282,18 +283,31 @@ function App() {
         <p className="subtitle">AI-powered code review with personality</p>
 
         <section className="feature-history" aria-label="Feature History">
-          <h2>Feature History</h2>
-          <ul>
-            {FEATURE_HISTORY.map((entry) => (
-              <li key={`${entry.date}-${entry.title}`}>
-                <span className="feature-history-date">{entry.date}</span>
-                <div>
-                  <strong>{entry.title}</strong>
-                  <p>{entry.details}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <button
+            type="button"
+            className="feature-history-toggle"
+            aria-expanded={isFeatureHistoryOpen}
+            aria-controls="feature-history-list"
+            onClick={() => setIsFeatureHistoryOpen((value) => !value)}
+          >
+            <span className={`feature-history-caret ${isFeatureHistoryOpen ? 'open' : ''}`} aria-hidden="true">
+              ▸
+            </span>
+            <span>Feature History</span>
+          </button>
+          {isFeatureHistoryOpen && (
+            <ul id="feature-history-list">
+              {FEATURE_HISTORY.map((entry) => (
+                <li key={`${entry.date}-${entry.title}`}>
+                  <span className="feature-history-date">{entry.date}</span>
+                  <div>
+                    <strong>{entry.title}</strong>
+                    <p>{entry.details}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {!review ? (
