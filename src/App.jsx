@@ -41,6 +41,21 @@ const REVIEW_TIMEOUT_MS = 90000;
 const FEATURE_HISTORY = [
   {
     date: '2026-02-22',
+    title: 'Review layout refinement',
+    details: 'Review mode now expands left with balanced code/review panel widths and smoother panel entrance.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Review-mode scroll containment',
+    details: 'Removed page-level right scrollbar by keeping overflow and scrolling inside the code/review panels.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Resilient streaming error handling',
+    details: 'Added clearer timeout/network/stream interruption messages and improved partial-stream behavior.'
+  },
+  {
+    date: '2026-02-22',
     title: 'Review output renders as Markdown',
     details: 'Reviews now support headings, lists, and code blocks with sanitized rendering.'
   },
