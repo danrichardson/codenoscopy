@@ -24,8 +24,8 @@
 ## New Functionality (Planned)
 
 ### Markdown Rendering
-- [ ] Review markdown renders headers/lists/code blocks correctly
-- [ ] Unsafe HTML is sanitized (no script injection)
+- [x] Review markdown renders headers/lists/code blocks correctly
+- [x] Unsafe HTML is sanitized (no script injection)
 
 ### Branding + Linkback
 - [ ] Throughline Tech link appears and opens correctly
