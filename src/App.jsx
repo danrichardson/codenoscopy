@@ -169,6 +169,8 @@ const getReviewErrorMessage = (error, didReceivePartial) => {
 
 function App() {
   const personaRef = useRef(null);
+  const latestRequestIdRef = useRef(0);
+  const activeAbortControllerRef = useRef(null);
   const [code, setCode] = useState(DEFAULT_CODE);
   const [personas, setPersonas] = useState([]);
   const [selectedPersona, setSelectedPersona] = useState('');
@@ -230,6 +232,16 @@ function App() {
     }
   };
 
+  const cancelActiveReview = () => {
+    latestRequestIdRef.current += 1;
+
+    if (activeAbortControllerRef.current) {
+      activeAbortControllerRef.current.abort('USER_CANCEL');
+    }
+
+    setIsLoading(false);
+  };
+
   const handleReview = async () => {
     if (!code.trim()) {
       setError('Please enter or upload some code to review');
@@ -242,11 +254,14 @@ function App() {
 
     let timeoutId;
     let didReceivePartial = false;
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
 
     try {
       const personaName = personas.find((item) => item.id === selectedPersona)?.name || selectedPersona;
       const modelName = MODELS.find((item) => item.id === selectedModel)?.name || selectedModel;
       const abortController = new AbortController();
+      activeAbortControllerRef.current = abortController;
       timeoutId = setTimeout(() => abortController.abort(), REVIEW_TIMEOUT_MS);
 
       const response = await fetch('/api/review', {
@@ -271,6 +286,10 @@ function App() {
       const contentType = response.headers.get('content-type') || '';
 
       if (contentType.includes('text/event-stream')) {
+        if (latestRequestIdRef.current !== requestId) {
+          return;
+        }
+
         setReview({
           review: '',
           persona: personaName,
@@ -278,6 +297,10 @@ function App() {
         });
 
         await readReviewStream(response, (text) => {
+          if (latestRequestIdRef.current !== requestId) {
+            return;
+          }
+
           didReceivePartial = true;
           setReview((previous) => {
             if (!previous) {
@@ -299,10 +322,24 @@ function App() {
           throw new Error('STREAM_INTERRUPTED');
         }
       } else {
+        if (latestRequestIdRef.current !== requestId) {
+          return;
+        }
+
         const data = await response.json();
         setReview(data);
       }
     } catch (err) {
+      if (latestRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      if (err?.name === 'AbortError' && activeAbortControllerRef.current?.signal?.reason === 'USER_CANCEL') {
+        setReview(null);
+        setError(null);
+        return;
+      }
+
       setError(getReviewErrorMessage(err, didReceivePartial));
       if (!didReceivePartial) {
         setReview(null);
@@ -311,16 +348,25 @@ function App() {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      setIsLoading(false);
+
+      if (latestRequestIdRef.current === requestId) {
+        setIsLoading(false);
+      }
+
+      if (activeAbortControllerRef.current?.signal?.aborted || latestRequestIdRef.current === requestId) {
+        activeAbortControllerRef.current = null;
+      }
     }
   };
 
   const handleClearResults = () => {
+    cancelActiveReview();
     setReview(null);
     setError(null);
   };
 
   const handleClearAll = () => {
+    cancelActiveReview();
     setCode(DEFAULT_CODE);
     setShowPlaceholder(true);
     setReview(null);
