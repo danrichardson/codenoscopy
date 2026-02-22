@@ -326,4 +326,58 @@ describe('App', () => {
 
     expect(await screen.findByText('Connection interrupted while streaming the review. Please try again.')).toBeInTheDocument();
   });
+
+  it('cancels active streaming when trying another persona', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+      if (url === '/api/personas') {
+        return new Response(JSON.stringify(personas), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (url === '/api/review' && options?.method === 'POST') {
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(
+              'event: content_block_delta\n' +
+              'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Partial "}}\n\n'
+            ));
+
+            setTimeout(() => {
+              controller.enqueue(new TextEncoder().encode(
+                'event: content_block_delta\n' +
+                'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"final"}}\n\n'
+              ));
+              controller.close();
+            }, 60);
+          }
+        });
+
+        return new Response(stream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }));
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    const cancelButton = await screen.findByRole('button', { name: 'Try Another Persona' });
+    await user.click(cancelButton);
+
+    await new Promise((resolve) => setTimeout(resolve, 120));
+
+    expect(screen.getByRole('button', { name: 'Review!' })).toBeInTheDocument();
+    expect(screen.queryByText('Partial final')).not.toBeInTheDocument();
+  });
 });
