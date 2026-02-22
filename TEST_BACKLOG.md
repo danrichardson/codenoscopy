@@ -39,7 +39,7 @@
 
 ### Persona Randomness
 - [x] Prompt variation modifies focus areas/mood/format
-- [ ] Variation remains within persona behavior constraints
+- [x] Variation remains within persona behavior constraints
 
 ## Coverage Goal
 - Keep overall line coverage at or above 80% as features are added.

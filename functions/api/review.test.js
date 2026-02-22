@@ -172,6 +172,40 @@ describe('POST /api/review', () => {
     expect(requestBody.system).toContain('Focus areas:');
     expect(requestBody.system).toContain('Mood:');
     expect(requestBody.system).toContain('Format:');
+    expect(requestBody.system).toContain('Constraint: Keep style consistent with the persona description above.');
+
+    randomSpy.mockRestore();
+  });
+
+  it('keeps dynamic directives aligned for harsh personas', async () => {
+    const randomSpy = vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0.0)
+      .mockReturnValueOnce(0.3)
+      .mockReturnValueOnce(0.0)
+      .mockReturnValueOnce(0.0);
+
+    fetch.mockResolvedValueOnce(new Response(JSON.stringify({
+      content: [{ text: 'Review text' }]
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+
+    const response = await onRequestPost(buildContext({
+      code: 'print(1)',
+      persona: 'meanest',
+      model: 'haiku',
+      stream: false,
+    }));
+
+    expect(response.status).toBe(200);
+    const anthropicCall = fetch.mock.calls[0];
+    const requestBody = JSON.parse(anthropicCall[1].body);
+
+    expect(requestBody.system).toContain('strict gatekeeper review');
+    expect(requestBody.system).not.toContain('coaching tone is welcome');
+    expect(requestBody.system).not.toContain('collaborative dialogue tone');
 
     randomSpy.mockRestore();
   });
