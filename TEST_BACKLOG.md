@@ -28,8 +28,8 @@
 - [x] Unsafe HTML is sanitized (no script injection)
 
 ### Branding + Linkback
-- [ ] Throughline Tech link appears and opens correctly
-- [ ] `mailto:dan@throughlinetech.net` link is present and valid
+- [x] Throughline Tech link appears and opens correctly
+- [x] `mailto:dan@throughlinetech.net` link is present and valid
 
 ### Streaming Reviews
 - [ ] Review text progressively appears during API stream

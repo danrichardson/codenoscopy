@@ -94,4 +94,16 @@ describe('App', () => {
     expect(screen.getByText('console.log("test")')).toBeInTheDocument();
     expect(document.querySelector('script')).toBeNull();
   });
+
+  it('shows Throughline Tech branding and email linkback', async () => {
+    render(<App />);
+
+    const links = await screen.findAllByRole('link', { name: 'Throughline Tech' });
+    expect(links.length).toBeGreaterThanOrEqual(1);
+    expect(links[0]).toHaveAttribute('href', 'https://throughlinetech.net');
+
+    const emailLinks = await screen.findAllByRole('link', { name: 'dan@throughlinetech.net' });
+    expect(emailLinks.length).toBeGreaterThanOrEqual(1);
+    expect(emailLinks[0]).toHaveAttribute('href', 'mailto:dan@throughlinetech.net');
+  });
 });

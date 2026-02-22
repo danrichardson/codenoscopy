@@ -153,6 +153,20 @@ function App() {
   return (
     <div className="app">
       <div className="container">
+        <div className="branding-bar">
+          <a
+            href="https://throughlinetech.net"
+            target="_blank"
+            rel="noreferrer"
+            className="branding-link"
+          >
+            Throughline Tech
+          </a>
+          <a href="mailto:dan@throughlinetech.net" className="branding-link">
+            dan@throughlinetech.net
+          </a>
+        </div>
+
         <h1 className="title">Codenoscopy</h1>
         <p className="subtitle">AI-powered code review with personality</p>
 
@@ -296,6 +310,15 @@ function App() {
             </div>
           </div>
         )}
+
+        <div className="footer-note">
+          Built by{' '}
+          <a href="https://throughlinetech.net" target="_blank" rel="noreferrer">
+            Throughline Tech
+          </a>
+          {' '}•{' '}
+          <a href="mailto:dan@throughlinetech.net">dan@throughlinetech.net</a>
+        </div>
       </div>
     </div>
   );
