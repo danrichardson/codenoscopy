@@ -133,6 +133,49 @@ const MODELS = {
   'sonnet': { id: 'claude-sonnet-4-5-20250514', name: 'Sonnet 4.5 (Balanced)' },
 };
 
+const RANDOM_FOCUS_AREAS = [
+  'Input validation and unsafe assumptions',
+  'Edge-case handling and failure modes',
+  'Readability and naming clarity',
+  'Runtime and algorithmic efficiency',
+  'Security and trust boundaries',
+  'Error handling and user impact',
+  'Testability and observability',
+  'Maintainability and long-term evolution'
+];
+
+const RANDOM_MOODS = [
+  'You are having a particularly good day and coaching tone is welcome.',
+  'You just came out of a frustrating incident review and are extra direct.',
+  'You are mentoring a junior developer you genuinely want to help succeed.',
+  'You are preparing this feedback for a high-stakes production release review.'
+];
+
+const RANDOM_FORMATS = [
+  'Use concise bullet points with severity labels.',
+  'Use a short narrative summary followed by concrete action items.',
+  'Use a scored rubric across correctness, safety, maintainability, and performance.',
+  'Use a collaborative dialogue tone with recommendations and tradeoffs.'
+];
+
+const sampleWithoutReplacement = (items, count) => {
+  const selected = new Set();
+  while (selected.size < count) {
+    const index = Math.floor(Math.random() * items.length);
+    selected.add(items[index]);
+  }
+  return Array.from(selected);
+};
+
+const buildDynamicSystemPrompt = (basePrompt) => {
+  const focusCount = Math.random() < 0.5 ? 2 : 3;
+  const selectedFocus = sampleWithoutReplacement(RANDOM_FOCUS_AREAS, focusCount);
+  const selectedMood = RANDOM_MOODS[Math.floor(Math.random() * RANDOM_MOODS.length)];
+  const selectedFormat = RANDOM_FORMATS[Math.floor(Math.random() * RANDOM_FORMATS.length)];
+
+  return `${basePrompt}\n\nDynamic review directives (vary each run):\n- Focus areas: ${selectedFocus.join('; ')}\n- Mood: ${selectedMood}\n- Format: ${selectedFormat}`;
+};
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -161,7 +204,7 @@ export async function onRequestPost(context) {
         model: selectedModel.id,
         max_tokens: 4096,
         stream: Boolean(stream),
-        system: selectedPersona.systemPrompt,
+        system: buildDynamicSystemPrompt(selectedPersona.systemPrompt),
         messages: [
           {
             role: 'user',

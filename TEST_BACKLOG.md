@@ -36,7 +36,7 @@
 - [ ] Stream cancellation/error transitions to user-friendly error state
 
 ### Persona Randomness
-- [ ] Prompt variation modifies focus areas/mood/format
+- [x] Prompt variation modifies focus areas/mood/format
 - [ ] Variation remains within persona behavior constraints
 
 ## Coverage Goal
