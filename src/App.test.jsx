@@ -23,6 +23,10 @@ vi.mock('@codemirror/lang-javascript', () => ({
   javascript: () => ({})
 }));
 
+vi.mock('@codemirror/theme-one-dark', () => ({
+  oneDark: {}
+}));
+
 const personas = [
   { id: 'security-expert', name: 'Security Expert' },
   { id: 'bug-hunter', name: 'Bug Hunter' },
@@ -30,6 +34,7 @@ const personas = [
 
 describe('App', () => {
   beforeEach(() => {
+    window.localStorage.clear();
     vi.stubGlobal('fetch', vi.fn(async (url, options) => {
       if (url === '/api/personas') {
         return new Response(JSON.stringify(personas), {
@@ -180,6 +185,19 @@ describe('App', () => {
     const emailLinks = await screen.findAllByRole('link', { name: 'dan@throughlinetech.net' });
     expect(emailLinks.length).toBeGreaterThanOrEqual(1);
     expect(emailLinks[0]).toHaveAttribute('href', 'mailto:dan@throughlinetech.net');
+  });
+
+  it('toggles dark mode and persists preference', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const darkModeButton = await screen.findByRole('button', { name: 'Switch to dark mode' });
+    await user.click(darkModeButton);
+
+    const appRoot = document.querySelector('.app');
+    expect(appRoot).toHaveClass('theme-dark');
+    expect(window.localStorage.getItem('codenoscopy-theme')).toBe('dark');
+    expect(screen.getByRole('button', { name: 'Switch to light mode' })).toBeInTheDocument();
   });
 
   it('keeps splash layout state before review starts', async () => {

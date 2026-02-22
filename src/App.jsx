@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
+import { oneDark } from '@codemirror/theme-one-dark';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
@@ -40,6 +41,7 @@ const MODELS = [
 ];
 
 const REVIEW_TIMEOUT_MS = 90000;
+const THEME_STORAGE_KEY = 'codenoscopy-theme';
 
 const EDITOR_LANGUAGES = {
   python: python(),
@@ -47,6 +49,11 @@ const EDITOR_LANGUAGES = {
 };
 
 const FEATURE_HISTORY = [
+  {
+    date: '2026-02-22',
+    title: 'Dark mode toggle',
+    details: 'Added persisted dark/light theme toggle with editor theme switching.'
+  },
   {
     date: '2026-02-22',
     title: 'Syntax-highlighted editor upgrade',
@@ -200,6 +207,23 @@ const getReviewErrorMessage = (error, didReceivePartial) => {
   return error?.message || 'Failed to get review';
 };
 
+const getInitialTheme = () => {
+  if (typeof window === 'undefined') {
+    return 'light';
+  }
+
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedTheme === 'light' || storedTheme === 'dark') {
+    return storedTheme;
+  }
+
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+
+  return 'light';
+};
+
 function App() {
   const personaRef = useRef(null);
   const latestRequestIdRef = useRef(0);
@@ -216,7 +240,12 @@ function App() {
   const [personaDropdownOpen, setPersonaDropdownOpen] = useState(false);
   const [flashingPersona, setFlashingPersona] = useState(null);
   const [isFeatureHistoryOpen, setIsFeatureHistoryOpen] = useState(false);
+  const [theme, setTheme] = useState(getInitialTheme);
   const isReviewMode = Boolean(review) || isLoading;
+
+  useEffect(() => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   useEffect(() => {
     fetch('/api/personas')
@@ -411,7 +440,7 @@ function App() {
   };
 
   return (
-    <div className={`app ${isReviewMode ? 'review-mode' : ''}`}>
+    <div className={`app ${isReviewMode ? 'review-mode' : ''} theme-${theme}`}>
       <div className={`container ${isReviewMode ? 'review-mode' : ''}`}>
         <div className="branding-bar">
           <a
@@ -422,9 +451,19 @@ function App() {
           >
             Throughline Tech
           </a>
-          <a href="mailto:dan@throughlinetech.net" className="branding-link">
-            dan@throughlinetech.net
-          </a>
+          <div className="branding-actions">
+            <button
+              type="button"
+              className="theme-toggle"
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              onClick={() => setTheme((previous) => (previous === 'dark' ? 'light' : 'dark'))}
+            >
+              {theme === 'dark' ? '☀ Light' : '🌙 Dark'}
+            </button>
+            <a href="mailto:dan@throughlinetech.net" className="branding-link">
+              dan@throughlinetech.net
+            </a>
+          </div>
         </div>
 
         <h1 className="title">Codenoscopy</h1>
@@ -553,7 +592,7 @@ function App() {
               <CodeMirror
                 value={code}
                 height="420px"
-                theme="light"
+                theme={theme === 'dark' ? oneDark : 'light'}
                 basicSetup={{
                   lineNumbers: true,
                   highlightActiveLine: true,
