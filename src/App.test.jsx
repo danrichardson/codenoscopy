@@ -157,4 +157,13 @@ describe('App', () => {
     expect(emailLinks.length).toBeGreaterThanOrEqual(1);
     expect(emailLinks[0]).toHaveAttribute('href', 'mailto:dan@throughlinetech.net');
   });
+
+  it('shows feature history entries in the app shell', async () => {
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: 'Feature History' })).toBeInTheDocument();
+    expect(screen.getByText('Review output renders as Markdown')).toBeInTheDocument();
+    expect(screen.getByText('Streaming responses enabled')).toBeInTheDocument();
+    expect(screen.getByText('Persona prompt randomness')).toBeInTheDocument();
+  });
 });
