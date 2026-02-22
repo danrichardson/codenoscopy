@@ -70,6 +70,12 @@ The `ANTHROPIC_API_KEY` must be set in the Cloudflare dashboard:
 
 Workers & Pages → codenoscopy → Settings → Environment variables
 
+Optional hardening variables for `POST /api/review`:
+
+- `MAX_CODE_CHARS` (default: `120000`) — max allowed code length
+- `RATE_LIMIT_MAX_REQUESTS` (default: `20`) — requests per IP in a window
+- `RATE_LIMIT_WINDOW_MS` (default: `60000`) — rate-limit window size in milliseconds
+
 ### Initial Setup (already done)
 
 The Pages project was created in the Cloudflare dashboard by connecting to the `danrichardson/codenoscopy` GitHub repo with these build settings:
