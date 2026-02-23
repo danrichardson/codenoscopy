@@ -98,11 +98,255 @@
   font-weight: 700;
 }
 
+.title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.title-link:hover {
+  text-decoration: underline;
+}
+
+.subtitle-shell {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  overflow: visible;
+}
+
+.subtitle-shell::before,
+.subtitle-shell::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.subtitle-shell::before {
+  left: calc(50% - 130px);
+  top: 50%;
+  background: #8ea0ff;
+}
+
+.subtitle-shell::after {
+  left: calc(50% + 122px);
+  top: 50%;
+  background: #93e6da;
+}
+
 .subtitle {
   text-align: center;
   color: #888;
   font-size: 1.1rem;
-  margin-bottom: 2rem;
+  margin: 0;
+}
+
+.subtitle-shell.is-animating .subtitle {
+  animation: subtitlePopWiggle 650ms ease-out;
+}
+
+.subtitle-shell.is-animating::before {
+  animation: subtitleSparkleLeft 650ms ease-out;
+}
+
+.subtitle-shell.is-animating::after {
+  animation: subtitleSparkleRight 650ms ease-out;
+}
+
+.subtitle-shell.anim-pop-wiggle.is-animating .subtitle {
+  animation: subtitlePopWiggle 650ms ease-out;
+}
+
+.subtitle-shell.anim-pop-glow.is-animating .subtitle {
+  animation: subtitlePopGlow 650ms ease-out;
+}
+
+.subtitle-shell.anim-bounce.is-animating .subtitle {
+  animation: subtitleBounce 650ms ease-out;
+}
+
+.subtitle-shell.anim-pulse.is-animating .subtitle {
+  animation: subtitlePulse 650ms ease-out;
+}
+
+.subtitle-shell.anim-tilt-snap.is-animating .subtitle {
+  animation: subtitleTiltSnap 650ms ease-out;
+}
+
+.subtitle-shell.anim-rise.is-animating .subtitle {
+  animation: subtitleRise 650ms ease-out;
+}
+
+.subtitle-shell.anim-sway.is-animating .subtitle {
+  animation: subtitleSway 650ms ease-out;
+}
+
+.subtitle-shell.anim-elastic.is-animating .subtitle {
+  animation: subtitleElastic 650ms ease-out;
+}
+
+.subtitle-shell.anim-shimmer.is-animating .subtitle {
+  animation: subtitleShimmer 650ms ease-out;
+}
+
+.subtitle-shell.anim-snapback.is-animating .subtitle {
+  animation: subtitleSnapback 650ms ease-out;
+}
+
+.subtitle-shell.anim-boing.is-animating .subtitle {
+  animation: subtitleBoing 650ms ease-out;
+}
+
+.subtitle-shell.anim-vortex.is-animating .subtitle {
+  animation: subtitleVortex 650ms ease-out;
+}
+
+@keyframes subtitlePopWiggle {
+  0% {
+    transform: scale(1);
+    text-shadow: 0 0 0 rgba(102, 126, 234, 0);
+  }
+  20% {
+    transform: scale(1.045) rotate(-1.2deg);
+    text-shadow: 0 0 18px rgba(102, 126, 234, 0.42);
+  }
+  45% {
+    transform: scale(1.067) rotate(1.2deg);
+    text-shadow: 0 0 24px rgba(102, 126, 234, 0.46);
+  }
+  75% {
+    transform: scale(1.015) rotate(-0.3deg);
+    text-shadow: 0 0 11px rgba(102, 126, 234, 0.26);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    text-shadow: 0 0 0 rgba(102, 126, 234, 0);
+  }
+}
+
+@keyframes subtitlePopGlow {
+  0% { transform: scale(1); text-shadow: 0 0 0 rgba(102, 126, 234, 0); }
+  35% { transform: scale(1.075); text-shadow: 0 0 30px rgba(102, 126, 234, 0.5); }
+  100% { transform: scale(1); text-shadow: 0 0 0 rgba(102, 126, 234, 0); }
+}
+
+@keyframes subtitleBounce {
+  0% { transform: translateY(0) scale(1); }
+  28% { transform: translateY(-11px) scale(1.03); }
+  50% { transform: translateY(0) scale(1); }
+  72% { transform: translateY(-5px) scale(1.015); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes subtitlePulse {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.075); }
+  60% { transform: scale(0.985); }
+  100% { transform: scale(1); }
+}
+
+@keyframes subtitleTiltSnap {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-2.4deg) scale(1.03); }
+  55% { transform: rotate(1.8deg) scale(1.045); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes subtitleRise {
+  0% { transform: translateY(5px); opacity: 0.92; }
+  35% { transform: translateY(-8px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes subtitleSway {
+  0% { transform: translateX(0); }
+  30% { transform: translateX(-8px); }
+  60% { transform: translateX(6px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes subtitleElastic {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.12, 0.91); }
+  62% { transform: scale(0.97, 1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes subtitleShimmer {
+  0% { filter: brightness(1); letter-spacing: normal; }
+  45% { filter: brightness(1.24); letter-spacing: 0.018em; }
+  100% { filter: brightness(1); letter-spacing: normal; }
+}
+
+@keyframes subtitleSnapback {
+  0% { transform: scale(1) translateX(0); }
+  25% { transform: scale(1.06) translateX(-6px); }
+  50% { transform: scale(0.985) translateX(6px); }
+  100% { transform: scale(1) translateX(0); }
+}
+
+@keyframes subtitleBoing {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.18, 0.82); }
+  42% { transform: scale(0.88, 1.13); }
+  65% { transform: scale(1.07, 0.96); }
+  100% { transform: scale(1); }
+}
+
+@keyframes subtitleVortex {
+  0% { transform: rotate(0deg) scale(1); }
+  35% { transform: rotate(3.8deg) scale(1.06); }
+  65% { transform: rotate(-3.8deg) scale(1.015); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes subtitleSparkleLeft {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0;
+  }
+  35% {
+    transform: translate(-13px, -9px) scale(1.5);
+    opacity: 0.86;
+  }
+  100% {
+    transform: translate(-21px, -15px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes subtitleSparkleRight {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0;
+  }
+  35% {
+    transform: translate(13px, -9px) scale(1.5);
+    opacity: 0.86;
+  }
+  100% {
+    transform: translate(21px, -15px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+.tagline-toggle {
+  border: 1px solid #d9dcf8;
+  background: #f4f5ff;
+  color: #5568d3;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tagline-toggle:hover {
+  background: #e9ecff;
 }
 
 .feature-history {
@@ -788,6 +1032,47 @@
   color: #8ea0ff;
 }
 
+.app.theme-dark .subtitle-shell.is-animating .subtitle {
+  animation: subtitlePopWiggleDark 650ms ease-out;
+}
+
+.app.theme-dark .subtitle-shell.anim-pop-wiggle.is-animating .subtitle {
+  animation: subtitlePopWiggleDark 650ms ease-out;
+}
+
+.app.theme-dark .subtitle-shell.anim-pop-glow.is-animating .subtitle {
+  animation: subtitlePopGlowDark 650ms ease-out;
+}
+
+@keyframes subtitlePopWiggleDark {
+  0% {
+    transform: scale(1);
+    text-shadow: 0 0 0 rgba(154, 169, 255, 0);
+  }
+  20% {
+    transform: scale(1.045) rotate(-1.2deg);
+    text-shadow: 0 0 18px rgba(154, 169, 255, 0.52);
+  }
+  45% {
+    transform: scale(1.067) rotate(1.2deg);
+    text-shadow: 0 0 27px rgba(154, 169, 255, 0.56);
+  }
+  75% {
+    transform: scale(1.015) rotate(-0.3deg);
+    text-shadow: 0 0 12px rgba(154, 169, 255, 0.32);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    text-shadow: 0 0 0 rgba(154, 169, 255, 0);
+  }
+}
+
+@keyframes subtitlePopGlowDark {
+  0% { transform: scale(1); text-shadow: 0 0 0 rgba(154, 169, 255, 0); }
+  35% { transform: scale(1.075); text-shadow: 0 0 30px rgba(154, 169, 255, 0.58); }
+  100% { transform: scale(1); text-shadow: 0 0 0 rgba(154, 169, 255, 0); }
+}
+
 .app.theme-dark .subtitle,
 .app.theme-dark .footer-note,
 .app.theme-dark .feature-history li p,
@@ -840,7 +1125,17 @@
   color: #c7d1ff;
 }
 
+.app.theme-dark .tagline-toggle {
+  border-color: #3a4564;
+  background: #242d44;
+  color: #c7d1ff;
+}
+
 .app.theme-dark .theme-toggle:hover {
+  background: #2a3550;
+}
+
+.app.theme-dark .tagline-toggle:hover {
   background: #2a3550;
 }
 

@@ -42,6 +42,126 @@ const MODELS = [
 
 const REVIEW_TIMEOUT_MS = 90000;
 const THEME_STORAGE_KEY = 'codenoscopy-theme';
+const TAGLINE_MIN_ROTATION_MS = 2500;
+const TAGLINE_MAX_ROTATION_MS = 5000;
+const TAGLINE_POOL_SIZE = 1000;
+const TAGLINE_ANIMATION_DURATION_MS = 650;
+
+const TAGLINE_LEADS = [
+  'Codenoscopy-certified',
+  'Lab-tested',
+  'Bedside-mannered',
+  'Dad-joke-enabled',
+  'Scope-ready',
+  'Clinic-grade',
+  'Pulse-checking',
+  'Stethoscope-adjacent',
+  'Chart-auditing',
+  'Snark-light',
+  'Vitals-aware',
+  'Calm-and-caffeinated',
+  'Nurse-station-approved',
+  'Code-ward-friendly',
+  'Low-drama',
+  'Procedure-conscious',
+  'Good-vibes-only',
+  'Whitecoat-energy',
+  'Charting-fast',
+  'Pager-friendly',
+  'Humor-prescribed',
+  'Refactor-rehab',
+  'No-panic',
+  'Recovery-room',
+  'Rounds-ready',
+];
+
+const TAGLINE_FOCUSES = [
+  'code colonoscopy',
+  'PR checkups',
+  'repo screenings',
+  'merge triage',
+  'bug diagnostics',
+  'code health exams',
+  'pull-request rounds',
+  'lint vitals',
+  'diff imaging',
+  'architecture intake',
+  'refactor physicals',
+  'release readiness exams',
+  'technical second opinions',
+  'code wellness visits',
+  'readability therapy',
+  'test coverage bloodwork',
+  'stack-wide checkups',
+  'signal-rich consultations',
+  'hotfix follow-ups',
+  'maintainability medicine',
+];
+
+const TAGLINE_ENDINGS = [
+  'with personality and clean gloves',
+  'with bedside wit and build empathy',
+  'minus panic, plus practical fixes',
+  'for smoother merges and fewer ulcers',
+  'for cleaner commits and happier Mondays',
+  'for teams that ship without heartburn',
+  'for confident refactors and mild chuckles',
+  'for high-signal feedback and low blood pressure',
+  'for practical engineers and dramatic logs',
+  'for modern teams who enjoy a light roast',
+  'for better pull requests and better jokes',
+  'for bug hunts with friendly sarcasm',
+  'for codebases that need a gentle scope',
+  'for fast triage and slower eye-rolls',
+  'for production calm and dad-joke charm',
+];
+
+const buildTaglinePool = (targetCount = TAGLINE_POOL_SIZE) => {
+  const results = new Set(['AI-powered code review with personality']);
+
+  for (const lead of TAGLINE_LEADS) {
+    for (const focus of TAGLINE_FOCUSES) {
+      for (const ending of TAGLINE_ENDINGS) {
+        results.add(`${lead} ${focus} ${ending}`);
+        if (results.size >= targetCount) {
+          return Array.from(results);
+        }
+      }
+    }
+  }
+
+  return Array.from(results);
+};
+
+const TAGLINE_POOL = buildTaglinePool();
+
+const randomIntInRange = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+const TAGLINE_STANDARD_ANIMATIONS = [
+  'pop-wiggle',
+  'pop-glow',
+  'bounce',
+  'pulse',
+  'tilt-snap',
+  'rise',
+  'sway',
+  'elastic',
+  'shimmer',
+  'snapback',
+];
+
+const TAGLINE_WACKY_ANIMATIONS = ['boing', 'vortex'];
+const TAGLINE_WACKY_CHANCE = 0.11;
+
+const pickRandomTaglineAnimation = () => {
+  const source = Math.random() < TAGLINE_WACKY_CHANCE
+    ? TAGLINE_WACKY_ANIMATIONS
+    : TAGLINE_STANDARD_ANIMATIONS;
+
+  return source[Math.floor(Math.random() * source.length)];
+};
 
 const EDITOR_LANGUAGES = {
   python: python(),
@@ -49,6 +169,11 @@ const EDITOR_LANGUAGES = {
 };
 
 const FEATURE_HISTORY = [
+  {
+    date: '2026-02-22',
+    title: 'Tagline chaos mode tuned up',
+    details: 'Subtitle rotation now runs faster (2.5-5s), with a broader random animation mix and extra-wacky variants showing up occasionally for playful micro-surprises.'
+  },
   {
     date: '2026-02-22',
     title: 'Line-accurate review linking',
@@ -308,9 +433,14 @@ function App() {
   const [flashingPersona, setFlashingPersona] = useState(null);
   const [isFeatureHistoryOpen, setIsFeatureHistoryOpen] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme);
+  const [taglineIndex, setTaglineIndex] = useState(0);
+  const [isTaglineFrozen, setIsTaglineFrozen] = useState(false);
+  const [isTaglineAnimating, setIsTaglineAnimating] = useState(false);
+  const [taglineAnimationVariant, setTaglineAnimationVariant] = useState('pop-wiggle');
   const isReviewMode = Boolean(review) || panelReviews.length > 0 || isLoading;
   const codeLines = code.split('\n');
   const linkedSingleReview = review ? linkifyReviewLineRefs(review.review) : '';
+  const activeTagline = TAGLINE_POOL[taglineIndex] || TAGLINE_POOL[0];
 
   useEffect(() => {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -338,6 +468,37 @@ function App() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (TAGLINE_POOL.length < 2 || isTaglineFrozen) {
+      return undefined;
+    }
+
+    const timeoutMs = randomIntInRange(TAGLINE_MIN_ROTATION_MS, TAGLINE_MAX_ROTATION_MS);
+    const timeoutId = setTimeout(() => {
+      setTaglineIndex((current) => {
+        let nextIndex = Math.floor(Math.random() * TAGLINE_POOL.length);
+
+        if (nextIndex === current) {
+          nextIndex = (current + 1 + Math.floor(Math.random() * (TAGLINE_POOL.length - 1))) % TAGLINE_POOL.length;
+        }
+
+        return nextIndex;
+      });
+    }, timeoutMs);
+
+    return () => clearTimeout(timeoutId);
+  }, [taglineIndex, isTaglineFrozen]);
+
+  useEffect(() => {
+    setTaglineAnimationVariant(pickRandomTaglineAnimation());
+    setIsTaglineAnimating(true);
+    const animationTimeout = setTimeout(() => {
+      setIsTaglineAnimating(false);
+    }, TAGLINE_ANIMATION_DURATION_MS);
+
+    return () => clearTimeout(animationTimeout);
+  }, [taglineIndex]);
 
   const handlePersonaHover = (persona) => {
     if (_meanSet.has(_enc(persona.id))) {
@@ -622,14 +783,33 @@ function App() {
             >
               {theme === 'dark' ? '☀ Light' : '🌙 Dark'}
             </button>
+            <button
+              type="button"
+              className="tagline-toggle"
+              onClick={() => setIsTaglineFrozen((value) => !value)}
+              aria-pressed={isTaglineFrozen}
+            >
+              {isTaglineFrozen ? 'Resume taglines' : 'Freeze taglines'}
+            </button>
             <a href="mailto:dan@throughlinetech.net" className="branding-link">
               dan@throughlinetech.net
             </a>
           </div>
         </div>
 
-        <h1 className="title">Codenoscopy</h1>
-        <p className="subtitle">AI-powered code review with personality</p>
+        <h1 className="title">
+          <a
+            href="https://github.com/danrichardson/codenoscopy"
+            target="_blank"
+            rel="noreferrer"
+            className="title-link"
+          >
+            Codenoscopy
+          </a>
+        </h1>
+        <div className={`subtitle-shell anim-${taglineAnimationVariant} ${isTaglineAnimating ? 'is-animating' : ''}`}>
+          <p className="subtitle">{activeTagline}</p>
+        </div>
 
         <section className="feature-history" aria-label="Feature History">
           <button
