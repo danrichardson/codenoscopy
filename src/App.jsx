@@ -42,82 +42,136 @@ const MODELS = [
 
 const REVIEW_TIMEOUT_MS = 90000;
 const THEME_STORAGE_KEY = 'codenoscopy-theme';
-const TAGLINE_MIN_ROTATION_MS = 2500;
-const TAGLINE_MAX_ROTATION_MS = 5000;
+const TAGLINE_MIN_ROTATION_MS = 4500;
+const TAGLINE_MAX_ROTATION_MS = 8000;
 const TAGLINE_POOL_SIZE = 1000;
-const TAGLINE_ANIMATION_DURATION_MS = 650;
+const TAGLINE_ANIMATION_DURATION_MS = 800;
+const TAGLINE_CONFETTI_CHANCE = 0.15;
+const TAGLINE_CONFETTI_DURATION_MS = 3200;
+const TAGLINE_CONFETTI_PARTICLE_COUNT = 90;
+
+const TAGLINE_ACCENT_COLORS = [
+  '#667eea', '#764ba2', '#e44d7a', '#4facfe', '#43e97b',
+  '#fa709a', '#f7971e', '#a18cd1', '#00c9a7', '#c471ed',
+  '#fc5c7d', '#6a11cb', '#00b4d8', '#ef476f', '#e07c24',
+];
+
+const CONFETTI_PALETTE = [
+  '#ff6b9e', '#ffd166', '#6fffe9', '#7e8cff', '#ff4dff',
+  '#00f5ff', '#90ff1f', '#ff7b54', '#ffb26b', '#5cf2c7',
+  '#78c6ff', '#9f8cff', '#ffe66d', '#ff5e9c', '#a8e6cf',
+  '#ffaaa5', '#ff8b94', '#fbc2eb', '#e44d26', '#43e97b',
+];
+
+const TAGLINE_ANIMATIONS = [
+  'fade-rise',
+  'color-bloom',
+  'gentle-slide',
+  'soft-bounce',
+  'breathe',
+  'rubber-band',
+  'typewriter-pop',
+  'wobble-jello',
+  'neon-flare',
+  'flip-in',
+  'sling-left',
+  'sling-right',
+  'drop-settle',
+  'glitch-in',
+];
 
 const TAGLINE_LEADS = [
-  'Codenoscopy-certified',
-  'Lab-tested',
-  'Bedside-mannered',
-  'Dad-joke-enabled',
-  'Scope-ready',
-  'Clinic-grade',
-  'Pulse-checking',
-  'Stethoscope-adjacent',
-  'Chart-auditing',
-  'Snark-light',
-  'Vitals-aware',
-  'Calm-and-caffeinated',
-  'Nurse-station-approved',
-  'Code-ward-friendly',
-  'Low-drama',
-  'Procedure-conscious',
-  'Good-vibes-only',
-  'Whitecoat-energy',
-  'Charting-fast',
-  'Pager-friendly',
-  'Humor-prescribed',
-  'Refactor-rehab',
-  'No-panic',
-  'Recovery-room',
-  'Rounds-ready',
+  'Board-certified',
+  'Rubber-glove-ready',
+  'Gown-optional',
+  'No-anesthesia-needed',
+  'Prep-kit-included',
+  'Scope-first, ask-later',
+  'Fiber-rich',
+  'Sedation-free',
+  'Pre-screened',
+  'Polyp-spotting',
+  'Turn-your-head-and-cough',
+  'Waiting-room-approved',
+  'Second-opinion-worthy',
+  'Bedside-manner-optional',
+  'Copay-free',
+  'HIPAA-adjacent',
+  'Endoscope-grade',
+  'Stat-paged',
+  'Chart-topping',
+  'Vitals-stable',
+  'Scrubbed-in',
+  'Nurse-practitioner-endorsed',
+  'Clipboard-wielding',
+  'Triage-priority',
+  'Exam-room-tested',
 ];
 
 const TAGLINE_FOCUSES = [
   'code colonoscopy',
-  'PR checkups',
-  'repo screenings',
-  'merge triage',
-  'bug diagnostics',
-  'code health exams',
-  'pull-request rounds',
-  'lint vitals',
-  'diff imaging',
-  'architecture intake',
-  'refactor physicals',
-  'release readiness exams',
-  'technical second opinions',
-  'code wellness visits',
-  'readability therapy',
-  'test coverage bloodwork',
-  'stack-wide checkups',
-  'signal-rich consultations',
-  'hotfix follow-ups',
-  'maintainability medicine',
+  'repo rectal exams',
+  'git-gut health checks',
+  'branch biopsy',
+  'merge polyp removal',
+  'dependency endoscopy',
+  'lint-ology lab work',
+  'deployment stress tests',
+  'commit colon cleanse',
+  'pull-request prostate checks',
+  'CI/CD cardiac monitoring',
+  'architecture appendectomy',
+  'production proctology',
+  'refactor recovery rooms',
+  'codebase stool samples',
+  'bug triage bedpan duty',
+  'sprint blood-work panels',
+  'hotfix house calls',
+  'pipeline pap smears',
+  'README physical therapy',
 ];
 
 const TAGLINE_ENDINGS = [
-  'with personality and clean gloves',
-  'with bedside wit and build empathy',
-  'minus panic, plus practical fixes',
-  'for smoother merges and fewer ulcers',
-  'for cleaner commits and happier Mondays',
-  'for teams that ship without heartburn',
-  'for confident refactors and mild chuckles',
-  'for high-signal feedback and low blood pressure',
-  'for practical engineers and dramatic logs',
-  'for modern teams who enjoy a light roast',
-  'for better pull requests and better jokes',
-  'for bug hunts with friendly sarcasm',
-  'for codebases that need a gentle scope',
-  'for fast triage and slower eye-rolls',
-  'for production calm and dad-joke charm',
+  '— no prep drink required',
+  '— the doctor will see your diff now',
+  '— please change into this paper gown',
+  '— results in 6 to 8 business milliseconds',
+  '— side effects may include cleaner code',
+  '— covered by your dad-joke insurance plan',
+  '— you might feel a little pressure',
+  '— don\'t worry, we\'ve seen worse',
+  '— deep breath, we\'re going in',
+  '— this won\'t hurt a bit (lies)',
+  '— now with 40% more bedside manner',
+  '— nurse, hand me the linter',
+  '— cough twice if your tests pass',
+  '— stat! (but like, chill stat)',
+  '— your codebase called, it wants a checkup',
 ];
 
 const buildTaglinePool = (targetCount = TAGLINE_POOL_SIZE) => {
-  const results = new Set(['AI-powered code review with personality']);
+  const results = new Set([
+    'AI-powered code review with personality',
+    'We look where other linters won\'t 🩺',
+    'Turning your repo sideways and saying "relax"',
+    'The only code review that asks you to count backwards from 10',
+    'Like a colonoscopy, but for your codebase — and you stay awake',
+    'Bend over, your pull request is next',
+    'You won\'t remember a thing... except the merge conflicts',
+    'Please rate your code pain on a scale of 1 to legacy',
+    'Sir, this is a code clinic',
+    'Your repo\'s vitals are... concerning',
+    'Scope goes in, insights come out — can\'t explain that',
+    'Insurance doesn\'t cover spaghetti code, but we do',
+    'The anesthesiologist says your tests are asleep already',
+    'Code review: it\'s not a tumor, it\'s a feature',
+    'Somebody page the on-call reviewer, stat',
+    'We put the "pro" in proctology and the "fun" in refactoring',
+    'Warning: may cause involuntary code cleanup',
+    'Ask your doctor if Codenoscopy is right for you',
+    'Inspecting your pipes since 2026 🔬',
+    'Where no linter has gone before',
+  ]);
 
   for (const lead of TAGLINE_LEADS) {
     for (const focus of TAGLINE_FOCUSES) {
@@ -139,28 +193,102 @@ const randomIntInRange = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-const TAGLINE_STANDARD_ANIMATIONS = [
-  'pop-wiggle',
-  'pop-glow',
-  'bounce',
-  'pulse',
-  'tilt-snap',
-  'rise',
-  'sway',
-  'elastic',
-  'shimmer',
-  'snapback',
-];
+const pickRandomAccentColor = () => {
+  return TAGLINE_ACCENT_COLORS[Math.floor(Math.random() * TAGLINE_ACCENT_COLORS.length)];
+};
 
-const TAGLINE_WACKY_ANIMATIONS = ['boing', 'vortex'];
-const TAGLINE_WACKY_CHANCE = 0.11;
+const pickRandomAnimation = () => {
+  return TAGLINE_ANIMATIONS[Math.floor(Math.random() * TAGLINE_ANIMATIONS.length)];
+};
 
-const pickRandomTaglineAnimation = () => {
-  const source = Math.random() < TAGLINE_WACKY_CHANCE
-    ? TAGLINE_WACKY_ANIMATIONS
-    : TAGLINE_STANDARD_ANIMATIONS;
+const launchCanvasConfetti = (canvasRef, frameRef) => {
+  const canvas = canvasRef.current;
+  if (!canvas) return;
 
-  return source[Math.floor(Math.random() * source.length)];
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  for (let i = 0; i < TAGLINE_CONFETTI_PARTICLE_COUNT; i++) {
+    const isStreamer = Math.random() < 0.3;
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * canvas.height * 0.4,
+      vx: (Math.random() - 0.5) * 3,
+      vy: Math.random() * 2 + 0.8,
+      w: isStreamer ? Math.random() * 3 + 2 : Math.random() * 9 + 5,
+      h: isStreamer ? Math.random() * 18 + 10 : Math.random() * 7 + 3,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.15,
+      color: CONFETTI_PALETTE[Math.floor(Math.random() * CONFETTI_PALETTE.length)],
+      opacity: 1,
+      gravity: 0.025 + Math.random() * 0.025,
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: 0.03 + Math.random() * 0.04,
+      shape: isStreamer ? 'rect' : (Math.random() < 0.4 ? 'circle' : 'rect'),
+    });
+  }
+
+  const startTime = performance.now();
+
+  const animate = (now) => {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / TAGLINE_CONFETTI_DURATION_MS, 1);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const p of particles) {
+      p.vy += p.gravity;
+      p.wobble += p.wobbleSpeed;
+      p.vx += Math.sin(p.wobble) * 0.12;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rotation += p.rotationSpeed;
+
+      if (progress > 0.65) {
+        p.opacity = Math.max(0, 1 - (progress - 0.65) / 0.35);
+      }
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.globalAlpha = p.opacity;
+      ctx.fillStyle = p.color;
+
+      if (p.shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const r = Math.min(p.w, p.h) * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(-p.w / 2 + r, -p.h / 2);
+        ctx.lineTo(p.w / 2 - r, -p.h / 2);
+        ctx.quadraticCurveTo(p.w / 2, -p.h / 2, p.w / 2, -p.h / 2 + r);
+        ctx.lineTo(p.w / 2, p.h / 2 - r);
+        ctx.quadraticCurveTo(p.w / 2, p.h / 2, p.w / 2 - r, p.h / 2);
+        ctx.lineTo(-p.w / 2 + r, p.h / 2);
+        ctx.quadraticCurveTo(-p.w / 2, p.h / 2, -p.w / 2, p.h / 2 - r);
+        ctx.lineTo(-p.w / 2, -p.h / 2 + r);
+        ctx.quadraticCurveTo(-p.w / 2, -p.h / 2, -p.w / 2 + r, -p.h / 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    if (progress < 1) {
+      frameRef.current = requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  };
+
+  if (frameRef.current) {
+    cancelAnimationFrame(frameRef.current);
+  }
+  frameRef.current = requestAnimationFrame(animate);
 };
 
 const EDITOR_LANGUAGES = {
@@ -169,6 +297,11 @@ const EDITOR_LANGUAGES = {
 };
 
 const FEATURE_HISTORY = [
+  {
+    date: '2026-02-22',
+    title: 'Tagline hype mode: overclocked',
+    details: 'Taglines now rotate at a faster 1.2-2.5s cadence with a fresh humor pool and a much broader transition set featuring frequent playful flair and occasional extra-wacky hits.'
+  },
   {
     date: '2026-02-22',
     title: 'Tagline chaos mode tuned up',
@@ -436,7 +569,10 @@ function App() {
   const [taglineIndex, setTaglineIndex] = useState(0);
   const [isTaglineFrozen, setIsTaglineFrozen] = useState(false);
   const [isTaglineAnimating, setIsTaglineAnimating] = useState(false);
-  const [taglineAnimationVariant, setTaglineAnimationVariant] = useState('pop-wiggle');
+  const [taglineAnimationVariant, setTaglineAnimationVariant] = useState('fade-rise');
+  const [taglineAccentColor, setTaglineAccentColor] = useState('#667eea');
+  const confettiCanvasRef = useRef(null);
+  const confettiFrameRef = useRef(null);
   const isReviewMode = Boolean(review) || panelReviews.length > 0 || isLoading;
   const codeLines = code.split('\n');
   const linkedSingleReview = review ? linkifyReviewLineRefs(review.review) : '';
@@ -491,14 +627,31 @@ function App() {
   }, [taglineIndex, isTaglineFrozen]);
 
   useEffect(() => {
-    setTaglineAnimationVariant(pickRandomTaglineAnimation());
+    setTaglineAnimationVariant(pickRandomAnimation());
+    setTaglineAccentColor(pickRandomAccentColor());
     setIsTaglineAnimating(true);
+
+    if (Math.random() < TAGLINE_CONFETTI_CHANCE) {
+      launchCanvasConfetti(confettiCanvasRef, confettiFrameRef);
+    }
+
     const animationTimeout = setTimeout(() => {
       setIsTaglineAnimating(false);
     }, TAGLINE_ANIMATION_DURATION_MS);
 
-    return () => clearTimeout(animationTimeout);
+    return () => {
+      clearTimeout(animationTimeout);
+    };
   }, [taglineIndex]);
+
+  useEffect(() => {
+    const frameRef = confettiFrameRef;
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, []);
 
   const handlePersonaHover = (persona) => {
     if (_meanSet.has(_enc(persona.id))) {
@@ -764,6 +917,11 @@ function App() {
 
   return (
     <div className={`app ${isReviewMode ? 'review-mode' : ''} theme-${theme}`}>
+      <canvas
+        ref={confettiCanvasRef}
+        className="confetti-canvas"
+        aria-hidden="true"
+      />
       <div className={`container ${isReviewMode ? 'review-mode' : ''}`}>
         <div className="branding-bar">
           <a
@@ -808,7 +966,7 @@ function App() {
           </a>
         </h1>
         <div className={`subtitle-shell anim-${taglineAnimationVariant} ${isTaglineAnimating ? 'is-animating' : ''}`}>
-          <p className="subtitle">{activeTagline}</p>
+          <p className="subtitle" style={{ color: taglineAccentColor }}>{activeTagline}</p>
         </div>
 
         <section className="feature-history" aria-label="Feature History">
