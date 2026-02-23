@@ -1412,3 +1412,279 @@
   width: 16px;
   height: 16px;
 }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — iPhone / small screens
+   Targets ≤ 768px. Desktop is untouched.
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* ── Layout & spacing ── */
+  .app {
+    padding: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .app.review-mode {
+    padding: 0.35rem;
+  }
+
+  .container {
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .container.review-mode {
+    width: calc(100vw - 0.7rem);
+  }
+
+  /* ── Branding bar ── */
+  .branding-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .branding-actions {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .branding-link {
+    font-size: 0.82rem;
+  }
+
+  .theme-toggle,
+  .tagline-toggle {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  /* ── Title & tagline ── */
+  .title {
+    font-size: 2rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .subtitle {
+    font-size: 0.92rem;
+    padding: 0 0.25rem;
+  }
+
+  .subtitle-shell {
+    margin-bottom: 1rem;
+  }
+
+  /* ── Feature history ── */
+  .feature-history {
+    padding: 0.5rem 0.65rem;
+    margin-bottom: 1rem;
+  }
+
+  .feature-history-toggle {
+    font-size: 0.85rem;
+  }
+
+  .feature-history ul {
+    max-height: 240px;
+  }
+
+  .feature-history li {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+
+  .feature-history-date {
+    font-size: 0.78rem;
+  }
+
+  .feature-history li strong {
+    font-size: 0.88rem;
+  }
+
+  .feature-history li p {
+    font-size: 0.82rem;
+  }
+
+  /* ── Controls / input section ── */
+  .controls {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .control-group {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .control-group label {
+    font-size: 0.85rem;
+  }
+
+  .panel-mode-group,
+  .panel-persona-group {
+    min-width: 0;
+  }
+
+  .custom-select {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .persona-select {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .file-upload-label {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+
+  /* ── Code editor ── */
+  .code-editor-wrapper .cm-editor {
+    min-height: 200px;
+    font-size: 0.82rem;
+  }
+
+  .code-editor-wrapper .cm-scroller {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── Buttons ── */
+  .button-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ── Results header ── */
+  .results-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .results-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .results-header .button-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .results-header .button-group .btn {
+    flex: 1 1 auto;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.82rem;
+    min-width: 0;
+  }
+
+  /* ── Side-by-side / code + review ── */
+  .side-by-side {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .container.review-mode .side-by-side .code-display,
+  .container.review-mode .side-by-side .review-display {
+    max-height: 50vh;
+    min-height: 180px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .code-display {
+    padding: 0.75rem;
+    font-size: 0.78rem;
+    max-height: 50vh;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .code-line {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 0.4rem;
+    padding: 0.08rem 0.5rem;
+  }
+
+  .code-line-number {
+    font-size: 0.72rem;
+  }
+
+  .review-display {
+    padding: 0.85rem;
+    max-height: 60vh;
+    line-height: 1.6;
+    font-size: 0.9rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .review-display pre {
+    font-size: 0.78rem;
+    padding: 0.5rem;
+  }
+
+  /* ── Panel review grid ── */
+  .panel-review-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .panel h3 {
+    font-size: 1rem;
+  }
+
+  .panel-code-toggle-section {
+    padding: 0.5rem 0.65rem;
+  }
+
+  .panel-code-toggle {
+    font-size: 0.85rem;
+  }
+
+  /* ── Footer ── */
+  .footer-note {
+    font-size: 0.8rem;
+    margin-top: 1.25rem;
+    line-height: 1.5;
+  }
+
+  /* ── Loading ── */
+  .loading-text {
+    font-size: 0.95rem;
+  }
+
+  .loading-spinner > div {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ── Error ── */
+  .error {
+    font-size: 0.88rem;
+    padding: 0.75rem;
+  }
+
+  /* ── Custom persona dropdown on mobile ── */
+  .custom-select-options {
+    max-height: 220px;
+  }
+
+  .custom-select-option {
+    padding: 0.7rem 0.75rem;
+  }
+
+  /* ── Confetti — tone down on mobile for perf ── */
+  .confetti-canvas {
+    opacity: 0.75;
+  }
+}
