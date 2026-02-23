@@ -304,8 +304,11 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    const panelToggle = await screen.findByLabelText('Enable 2-3 persona parallel review');
-    await user.click(panelToggle);
+    const personaToggle = await screen.findByRole('button', { name: /Security Expert/i });
+    await user.click(personaToggle);
+
+    const bugHunterCheckbox = await screen.findByRole('checkbox', { name: 'Bug Hunter' });
+    await user.click(bugHunterCheckbox);
 
     const reviewButton = await screen.findByRole('button', { name: 'Review!' });
     await user.click(reviewButton);
@@ -313,6 +316,11 @@ describe('App', () => {
     expect(await screen.findByText('Panel Review (2 personas)')).toBeInTheDocument();
     expect(screen.getByText('Panel result from Security Expert')).toBeInTheDocument();
     expect(screen.getByText('Panel result from Bug Hunter')).toBeInTheDocument();
+
+    const showCodeButton = screen.getByRole('button', { name: 'Show Submitted Code' });
+    await user.click(showCodeButton);
+    expect(screen.getByRole('button', { name: 'Hide Submitted Code' })).toBeInTheDocument();
+    expect(screen.getByText(/def digit_fingerprint\(n\):/)).toBeInTheDocument();
 
     const reviewCalls = fetch.mock.calls.filter(([url]) => url === '/api/review');
     expect(reviewCalls.length).toBe(2);
@@ -362,20 +370,86 @@ describe('App', () => {
     expect(codeInput.value).toContain('def digit_fingerprint(n):');
   });
 
-  it('supports keyboard interaction on persona dropdown', async () => {
+  it('auto-switches to panel review when multiple personas are selected', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await screen.findByText('Reviewer Persona');
-    const personaToggle = document.querySelector('.custom-select');
-    expect(personaToggle).toBeTruthy();
+    const personaToggle = await screen.findByRole('button', { name: /Security Expert/i });
     await user.click(personaToggle);
 
-    const option = await screen.findByRole('option', { name: 'Bug Hunter' });
-    option.focus();
-    await user.keyboard('{Enter}');
+    const securityCheckbox = await screen.findByRole('checkbox', { name: 'Security Expert' });
+    const bugHunterCheckbox = await screen.findByRole('checkbox', { name: 'Bug Hunter' });
 
-    expect(screen.getByText('Bug Hunter')).toBeInTheDocument();
+    expect(securityCheckbox).toBeChecked();
+    expect(bugHunterCheckbox).not.toBeChecked();
+    expect(screen.queryByText('Panel Mode Enabled')).not.toBeInTheDocument();
+
+    await user.click(bugHunterCheckbox);
+
+    expect(bugHunterCheckbox).toBeChecked();
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByText('Panel Mode Enabled')).toBeInTheDocument();
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    expect(await screen.findByText('Panel Review (2 personas)')).toBeInTheDocument();
+  });
+
+  it('resets selected personas after start over from panel review', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+      if (url === '/api/personas') {
+        return new Response(JSON.stringify(personas), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (url === '/api/review' && options?.method === 'POST') {
+        const payload = JSON.parse(options.body);
+        const personaName = personas.find((persona) => persona.id === payload.persona)?.name || payload.persona;
+        return new Response(JSON.stringify({
+          review: `Panel result from ${personaName}`,
+          persona: personaName,
+          model: 'Haiku 4.5 (Fast)'
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }));
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const personaToggle = await screen.findByRole('button', { name: /Security Expert/i });
+    await user.click(personaToggle);
+
+    const bugHunterCheckbox = await screen.findByRole('checkbox', { name: 'Bug Hunter' });
+    await user.click(bugHunterCheckbox);
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    expect(await screen.findByText('Panel Review (2 personas)')).toBeInTheDocument();
+
+    const startOverButton = screen.getByRole('button', { name: 'Start Over' });
+    await user.click(startOverButton);
+
+    const resetPersonaToggle = await screen.findByRole('button', { name: /Security Expert/i });
+    await user.click(resetPersonaToggle);
+
+    const resetSecurityCheckbox = await screen.findByRole('checkbox', { name: 'Security Expert' });
+    const resetBugHunterCheckbox = await screen.findByRole('checkbox', { name: 'Bug Hunter' });
+
+    expect(resetSecurityCheckbox).toBeChecked();
+    expect(resetBugHunterCheckbox).not.toBeChecked();
+    expect(screen.queryByText('Panel Mode Enabled')).not.toBeInTheDocument();
   });
 
   it('shows user-friendly message when stream is interrupted', async () => {
@@ -413,6 +487,54 @@ describe('App', () => {
     await user.click(reviewButton);
 
     expect(await screen.findByText('Connection interrupted while streaming the review. Please try again.')).toBeInTheDocument();
+  });
+
+  it('highlights code lines when hovering a review line reference', async () => {
+    const originalScrollIntoView = Element.prototype.scrollIntoView;
+    const scrollIntoViewMock = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoViewMock;
+
+    vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+      if (url === '/api/personas') {
+        return new Response(JSON.stringify(personas), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (url === '/api/review' && options?.method === 'POST') {
+        return new Response(JSON.stringify({
+          review: 'Problem found on lines 2-3 in your function.',
+          persona: 'Security Expert',
+          model: 'Haiku 4.5 (Fast)'
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }));
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review!' });
+    await user.click(reviewButton);
+
+    const lineReference = await screen.findByRole('button', { name: /lines 2-3/i });
+    await user.hover(lineReference);
+
+    const lineTwo = document.querySelector('[data-code-line="2"]');
+    const lineThree = document.querySelector('[data-code-line="3"]');
+    expect(lineTwo).toHaveClass('is-highlighted');
+    expect(lineThree).toHaveClass('is-highlighted');
+    expect(scrollIntoViewMock).toHaveBeenCalled();
+
+    Element.prototype.scrollIntoView = originalScrollIntoView;
   });
 
   it('cancels active streaming when trying another persona', async () => {

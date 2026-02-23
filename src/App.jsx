@@ -51,63 +51,126 @@ const EDITOR_LANGUAGES = {
 const FEATURE_HISTORY = [
   {
     date: '2026-02-22',
-    title: 'Panel review mode',
-    details: 'Run 2-3 personas in parallel and compare reviews side-by-side.'
+    title: 'Line-accurate review linking',
+    details: 'Single-review output now converts cited line references into interactive anchors that highlight and auto-scroll the code pane for direct traceability.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Citation-quality prompt upgrade',
+    details: 'Backend prompts now send numbered source with stricter citation rules, improving line precision and reducing vague “best guess” references.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Dual-pane independent scrolling',
+    details: 'Single-review mode now keeps independent scrollbars for code and review panes so long analyses stay readable with precise jump-to-line behavior.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Persona UX consolidation',
+    details: 'Rebuilt persona selection as a custom multi-select dropdown with embedded checkboxes, one-click single selection, and seamless multi-select toggling.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Panel mode state intelligence',
+    details: 'Panel execution now auto-activates from persona count (2-3 selected), shows a “Panel Mode Enabled” badge, and resets cleanly on Start Over.'
+  },
+  {
+    date: '2026-02-22',
+    title: 'Obfuscated persona easter egg restored',
+    details: 'The hidden mean-persona hover transformation was restored and hardened with encoded matching logic while keeping the implementation intentionally non-obvious.'
   },
   {
     date: '2026-02-22',
     title: 'Dark mode toggle',
-    details: 'Added persisted dark/light theme toggle with editor theme switching.'
+    details: 'Added persistent dark/light mode with synchronized editor theming so visual preferences survive reloads across core UI surfaces.'
   },
   {
     date: '2026-02-22',
     title: 'Syntax-highlighted editor upgrade',
-    details: 'Replaced plain textarea with CodeMirror editor including line numbers and language-aware highlighting.'
+    details: 'Replaced the plain textarea with language-aware CodeMirror, including line numbers and stronger editor ergonomics.'
   },
   {
     date: '2026-02-22',
     title: 'API hardening: input limits + rate limiting',
-    details: 'Added server-side code-size validation and per-IP request throttling for review endpoint protection.'
+    details: 'Introduced server-side payload limits, malformed JSON handling, and per-IP rate controls for safer, more predictable endpoint behavior.'
   },
   {
     date: '2026-02-22',
-    title: 'Review layout refinement',
-    details: 'Review mode now expands left with balanced code/review panel widths and smoother panel entrance.'
-  },
-  {
-    date: '2026-02-22',
-    title: 'Review-mode scroll containment',
-    details: 'Removed page-level right scrollbar by keeping overflow and scrolling inside the code/review panels.'
+    title: 'Review layout refinements',
+    details: 'Refined panel geometry and container behavior to stabilize controls, remove clipping regressions, and keep interactions usable across viewport sizes.'
   },
   {
     date: '2026-02-22',
     title: 'Resilient streaming error handling',
-    details: 'Added clearer timeout/network/stream interruption messages and improved partial-stream behavior.'
+    details: 'Improved stream lifecycle handling with clearer timeout/network interruption states, safer cancellation, and better partial-response continuity.'
   },
   {
     date: '2026-02-22',
     title: 'Review output renders as Markdown',
-    details: 'Reviews now support headings, lists, and code blocks with sanitized rendering.'
+    details: 'Upgraded response rendering to sanitized Markdown so headings, lists, and code snippets keep structure without sacrificing safety.'
   },
   {
     date: '2026-02-22',
     title: 'Streaming responses enabled',
-    details: 'Review text appears progressively instead of waiting for the entire response.'
+    details: 'Enabled progressive response streaming so users see analysis in real time instead of waiting for full completion.'
   },
   {
     date: '2026-02-22',
     title: 'Persona prompt randomness',
-    details: 'Each review varies by focus areas, mood, and feedback format for less repetitive output.'
+    details: 'Added controlled variability in focus areas, tone, and output format so repeated reviews stay fresh while matching persona intent.'
   },
   {
     date: '2026-02-22',
     title: 'Throughline Tech branding links',
-    details: 'Added site and email links for direct contact and project attribution.'
+    details: 'Integrated lightweight product attribution and direct contact links in the shell without adding friction to the main workflow.'
   },
 ];
 
 const _transform = (name) => {
   return String.fromCharCode(name.charCodeAt(0) - 9) + 'ean' + name.slice(4);
+};
+
+const _enc = (value) => {
+  return [...String(value || '')]
+    .map((char) => String.fromCharCode(char.charCodeAt(0) + 1))
+    .join('');
+};
+
+const _meanSet = new Set(['nfbo', 'nfbofs', 'nfboftu']);
+
+const LINE_REF_PREFIX = '#line-';
+
+const linkifyReviewLineRefs = (text = '') => {
+  return text.replace(/\b(lines?\s+(\d+)(?:\s*[-–]\s*(\d+))?)/gi, (fullMatch, label, start, end) => {
+    const startLine = Number(start);
+    const endLine = Number(end || start);
+
+    if (!Number.isInteger(startLine) || !Number.isInteger(endLine)) {
+      return fullMatch;
+    }
+
+    return `[${label}](${LINE_REF_PREFIX}${startLine}-${endLine})`;
+  });
+};
+
+const parseLineRefHref = (href = '') => {
+  if (!href.startsWith(LINE_REF_PREFIX)) {
+    return null;
+  }
+
+  const rawRange = href.slice(LINE_REF_PREFIX.length);
+  const [rawStart, rawEnd] = rawRange.split('-');
+  const start = Number(rawStart);
+  const end = Number(rawEnd || rawStart);
+
+  if (!Number.isInteger(start) || !Number.isInteger(end)) {
+    return null;
+  }
+
+  return {
+    start: Math.max(1, Math.min(start, end)),
+    end: Math.max(start, end),
+  };
 };
 
 const detectEditorLanguage = (inputCode, fileName = '') => {
@@ -231,7 +294,7 @@ function App() {
   const activeAbortControllerRef = useRef(null);
   const [code, setCode] = useState(DEFAULT_CODE);
   const [personas, setPersonas] = useState([]);
-  const [selectedPersona, setSelectedPersona] = useState('');
+  const [selectedPersonaIds, setSelectedPersonaIds] = useState([]);
   const [selectedModel, setSelectedModel] = useState('haiku');
   const [isLoading, setIsLoading] = useState(false);
   const [review, setReview] = useState(null);
@@ -239,13 +302,15 @@ function App() {
   const [error, setError] = useState(null);
   const [showPlaceholder, setShowPlaceholder] = useState(true);
   const [editorLanguage, setEditorLanguage] = useState('python');
-  const [isPanelMode, setIsPanelMode] = useState(false);
-  const [panelPersonaIds, setPanelPersonaIds] = useState([]);
+  const [isPanelCodeOpen, setIsPanelCodeOpen] = useState(false);
+  const [hoveredLineRange, setHoveredLineRange] = useState(null);
   const [personaDropdownOpen, setPersonaDropdownOpen] = useState(false);
   const [flashingPersona, setFlashingPersona] = useState(null);
   const [isFeatureHistoryOpen, setIsFeatureHistoryOpen] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme);
   const isReviewMode = Boolean(review) || panelReviews.length > 0 || isLoading;
+  const codeLines = code.split('\n');
+  const linkedSingleReview = review ? linkifyReviewLineRefs(review.review) : '';
 
   useEffect(() => {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -257,25 +322,25 @@ function App() {
       .then(data => {
         setPersonas(data);
         if (data.length > 0) {
-          setSelectedPersona(data[0].id);
-          setPanelPersonaIds(data.slice(0, 2).map((persona) => persona.id));
+          setSelectedPersonaIds([data[0].id]);
         }
       })
       .catch(err => console.error('Failed to fetch personas:', err));
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (personaRef.current && !personaRef.current.contains(e.target)) {
+    const handleClickOutside = (event) => {
+      if (personaRef.current && !personaRef.current.contains(event.target)) {
         setPersonaDropdownOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handlePersonaHover = (persona) => {
-    if (['mean', 'meaner', 'meanest'].includes(persona.id)) {
+    if (_meanSet.has(_enc(persona.id))) {
       setFlashingPersona(persona.id);
       setTimeout(() => setFlashingPersona(null), 200);
     }
@@ -318,23 +383,22 @@ function App() {
       return;
     }
 
+    const selectedPersonas = selectedPersonaIds.slice(0, 3);
+    if (selectedPersonas.length === 0) {
+      setError('Select at least 1 reviewer persona.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setReview(null);
     setPanelReviews([]);
 
-    if (isPanelMode) {
-      const selectedPanelPersonas = panelPersonaIds.slice(0, 3);
-
-      if (selectedPanelPersonas.length < 2) {
-        setError('Select at least 2 personas for panel review.');
-        setIsLoading(false);
-        return;
-      }
+    if (selectedPersonas.length > 1) {
 
       try {
         const requests = await Promise.all(
-          selectedPanelPersonas.map(async (personaId) => {
+          selectedPersonas.map(async (personaId) => {
             const response = await fetch('/api/review', {
               method: 'POST',
               headers: {
@@ -374,7 +438,8 @@ function App() {
     latestRequestIdRef.current = requestId;
 
     try {
-      const personaName = personas.find((item) => item.id === selectedPersona)?.name || selectedPersona;
+      const selectedPersonaId = selectedPersonas[0];
+      const personaName = personas.find((item) => item.id === selectedPersonaId)?.name || selectedPersonaId;
       const modelName = MODELS.find((item) => item.id === selectedModel)?.name || selectedModel;
       const abortController = new AbortController();
       activeAbortControllerRef.current = abortController;
@@ -388,7 +453,7 @@ function App() {
         signal: abortController.signal,
         body: JSON.stringify({
           code,
-          persona: selectedPersona,
+          persona: selectedPersonaId,
           model: selectedModel,
           stream: true,
         })
@@ -480,6 +545,7 @@ function App() {
     setReview(null);
     setPanelReviews([]);
     setError(null);
+    setHoveredLineRange(null);
   };
 
   const handleClearAll = () => {
@@ -490,10 +556,21 @@ function App() {
     setReview(null);
     setPanelReviews([]);
     setError(null);
+    setSelectedPersonaIds(personas.length > 0 ? [personas[0].id] : []);
+    setPersonaDropdownOpen(false);
+    setIsPanelCodeOpen(false);
+    setHoveredLineRange(null);
   };
 
-  const togglePanelPersona = (personaId) => {
-    setPanelPersonaIds((current) => {
+  const scrollToCodeLine = (lineNumber, behavior = 'smooth') => {
+    const targetLine = document.querySelector(`[data-code-line="${lineNumber}"]`);
+    if (targetLine) {
+      targetLine.scrollIntoView({ behavior, block: 'center' });
+    }
+  };
+
+  const toggleSelectedPersona = (personaId) => {
+    setSelectedPersonaIds((current) => {
       if (current.includes(personaId)) {
         return current.filter((id) => id !== personaId);
       }
@@ -504,6 +581,24 @@ function App() {
 
       return [...current, personaId];
     });
+  };
+
+  const selectSinglePersona = (personaId) => {
+    setSelectedPersonaIds([personaId]);
+    setPersonaDropdownOpen(false);
+  };
+
+  const selectedPersonaLabel = () => {
+    if (selectedPersonaIds.length === 0) {
+      return 'Select personas...';
+    }
+
+    if (selectedPersonaIds.length === 1) {
+      const selectedPersona = personas.find((persona) => persona.id === selectedPersonaIds[0]);
+      return selectedPersona?.name || 'Select personas...';
+    }
+
+    return `${selectedPersonaIds.length} personas selected`;
   };
 
   return (
@@ -567,31 +662,18 @@ function App() {
         {!review && panelReviews.length === 0 ? (
           <div className="input-section">
             <div className="controls">
-              <div className="control-group panel-mode-group">
-                <label htmlFor="panel-mode-toggle">Panel Review</label>
-                <label className="panel-toggle-label" htmlFor="panel-mode-toggle">
-                  <input
-                    id="panel-mode-toggle"
-                    type="checkbox"
-                    checked={isPanelMode}
-                    onChange={(event) => {
-                      setIsPanelMode(event.target.checked);
-                      setReview(null);
-                      setPanelReviews([]);
-                      setError(null);
-                    }}
-                  />
-                  Enable 2-3 persona parallel review
-                </label>
-              </div>
-
               <div className="control-group">
-                <label>Reviewer Persona</label>
+                <div className="control-label-row">
+                  <label>Reviewer Persona</label>
+                  {selectedPersonaIds.length > 1 && (
+                    <span className="panel-enabled-badge">Panel Mode Enabled</span>
+                  )}
+                </div>
                 <div className="custom-select-wrapper" ref={personaRef}>
                   <button
                     type="button"
                     className="custom-select"
-                    onClick={() => setPersonaDropdownOpen(!personaDropdownOpen)}
+                    onClick={() => setPersonaDropdownOpen((open) => !open)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
                         event.preventDefault();
@@ -606,36 +688,40 @@ function App() {
                     aria-haspopup="listbox"
                     aria-controls="persona-options-listbox"
                   >
-                    <span>{personas.find(p => p.id === selectedPersona)?.name || 'Select...'}</span>
+                    <span>{selectedPersonaLabel()}</span>
                     <span className="custom-select-arrow">▾</span>
                   </button>
                   {personaDropdownOpen && (
                     <div className="custom-select-options" role="listbox" id="persona-options-listbox">
-                      {personas.map(persona => (
+                      {personas.map((persona) => (
                         <div
                           key={persona.id}
-                          className={`custom-select-option ${persona.id === selectedPersona ? 'selected' : ''}`}
+                          className={`custom-select-option persona-option-row ${selectedPersonaIds.includes(persona.id) ? 'selected' : ''}`}
                           role="option"
                           tabIndex={0}
-                          aria-selected={persona.id === selectedPersona}
-                          onClick={() => {
-                            setSelectedPersona(persona.id);
-                            setPersonaDropdownOpen(false);
-                          }}
+                          aria-selected={selectedPersonaIds.includes(persona.id)}
+                          onClick={() => selectSinglePersona(persona.id)}
+                          onMouseEnter={() => handlePersonaHover(persona)}
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' || event.key === ' ') {
                               event.preventDefault();
-                              setSelectedPersona(persona.id);
-                              setPersonaDropdownOpen(false);
+                              selectSinglePersona(persona.id);
                             }
 
                             if (event.key === 'Escape') {
                               setPersonaDropdownOpen(false);
                             }
                           }}
-                          onMouseEnter={() => handlePersonaHover(persona)}
                         >
-                          {flashingPersona === persona.id ? _transform(persona.name) : persona.name}
+                          <input
+                            type="checkbox"
+                            className="persona-option-checkbox"
+                            checked={selectedPersonaIds.includes(persona.id)}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={() => toggleSelectedPersona(persona.id)}
+                            aria-label={persona.name}
+                          />
+                          <span>{flashingPersona === persona.id ? _transform(persona.name) : persona.name}</span>
                         </div>
                       ))}
                     </div>
@@ -671,24 +757,6 @@ function App() {
                   />
                 </label>
               </div>
-
-              {isPanelMode && (
-                <div className="control-group panel-persona-group">
-                  <label>Panel Personas (max 3)</label>
-                  <div className="panel-persona-list">
-                    {personas.map((persona) => (
-                      <label key={persona.id} className="panel-persona-item">
-                        <input
-                          type="checkbox"
-                          checked={panelPersonaIds.includes(persona.id)}
-                          onChange={() => togglePanelPersona(persona.id)}
-                        />
-                        <span>{persona.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="code-editor-wrapper" data-testid="code-editor-wrapper">
@@ -759,9 +827,29 @@ function App() {
               </div>
             </div>
 
+            <div className="panel-code-toggle-section">
+              <button
+                type="button"
+                className="panel-code-toggle"
+                aria-expanded={isPanelCodeOpen}
+                aria-controls="panel-submitted-code"
+                onClick={() => setIsPanelCodeOpen((value) => !value)}
+              >
+                <span className={`feature-history-caret ${isPanelCodeOpen ? 'open' : ''}`} aria-hidden="true">
+                  ▸
+                </span>
+                <span>{isPanelCodeOpen ? 'Hide Submitted Code' : 'Show Submitted Code'}</span>
+              </button>
+              {isPanelCodeOpen && (
+                <div id="panel-submitted-code" className="panel-code-box">
+                  <pre className="code-display">{code}</pre>
+                </div>
+              )}
+            </div>
+
             <div className="panel-review-grid">
-              {panelReviews.map((panelReview) => (
-                <div className="panel" key={panelReview.persona}>
+              {panelReviews.map((panelReview, index) => (
+                <div className="panel" key={`${panelReview.persona}-${index}`}>
                   <h3>{panelReview.persona}</h3>
                   <div className="review-display">
                     <ReactMarkdown
@@ -796,7 +884,25 @@ function App() {
             <div className="side-by-side">
               <div className="panel">
                 <h3>Your Code</h3>
-                <pre className="code-display">{code}</pre>
+                <pre className="code-display code-display--linked">
+                  {codeLines.map((line, index) => {
+                    const lineNumber = index + 1;
+                    const isHighlighted = hoveredLineRange
+                      ? lineNumber >= hoveredLineRange.start && lineNumber <= hoveredLineRange.end
+                      : false;
+
+                    return (
+                      <div
+                        key={`code-line-${lineNumber}`}
+                        data-code-line={lineNumber}
+                        className={`code-line ${isHighlighted ? 'is-highlighted' : ''}`}
+                      >
+                        <span className="code-line-number">{lineNumber}</span>
+                        <span className="code-line-content">{line || ' '}</span>
+                      </div>
+                    );
+                  })}
+                </pre>
               </div>
 
               <div className="panel review-panel">
@@ -805,8 +911,40 @@ function App() {
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeSanitize]}
+                    components={{
+                      a: ({ href, children, ...props }) => {
+                        const range = parseLineRefHref(href || '');
+
+                        if (!range) {
+                          return <a href={href} {...props}>{children}</a>;
+                        }
+
+                        return (
+                          <button
+                            type="button"
+                            className="line-ref-link"
+                            onMouseEnter={() => {
+                              setHoveredLineRange(range);
+                              scrollToCodeLine(range.start);
+                            }}
+                            onMouseLeave={() => setHoveredLineRange(null)}
+                            onFocus={() => {
+                              setHoveredLineRange(range);
+                              scrollToCodeLine(range.start, 'auto');
+                            }}
+                            onBlur={() => setHoveredLineRange(null)}
+                            onClick={() => {
+                              setHoveredLineRange(range);
+                              scrollToCodeLine(range.start);
+                            }}
+                          >
+                            {children}
+                          </button>
+                        );
+                      },
+                    }}
                   >
-                    {review.review}
+                    {linkedSingleReview}
                   </ReactMarkdown>
                 </div>
               </div>
@@ -814,14 +952,16 @@ function App() {
           </div>
         )}
 
-        <div className="footer-note">
-          Built by{' '}
-          <a href="https://throughlinetech.net" target="_blank" rel="noreferrer">
-            Throughline Tech
-          </a>
-          {' '}•{' '}
-          <a href="mailto:dan@throughlinetech.net">dan@throughlinetech.net</a>
-        </div>
+        {!isReviewMode && (
+          <div className="footer-note">
+            Built by{' '}
+            <a href="https://throughlinetech.net" target="_blank" rel="noreferrer">
+              Throughline Tech
+            </a>
+            {' '}•{' '}
+            <a href="mailto:dan@throughlinetech.net">dan@throughlinetech.net</a>
+          </div>
+        )}
       </div>
     </div>
   );

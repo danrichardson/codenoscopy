@@ -6,12 +6,16 @@
   align-items: center;
 }
 
+.app.panel-setup-mode {
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1.25rem;
+}
+
 .app.review-mode {
   justify-content: flex-start;
   align-items: flex-start;
   padding: 1.25rem;
-  height: 100vh;
-  overflow: hidden;
 }
 
 .container {
@@ -27,8 +31,8 @@
 .container.review-mode {
   max-width: none;
   width: calc(100vw - 2.5rem);
-  max-height: calc(100vh - 2.5rem);
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -139,6 +143,9 @@
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.75rem;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 0.35rem;
 }
 
 .feature-history li {
@@ -194,6 +201,24 @@
   font-size: 0.9rem;
 }
 
+.control-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.panel-enabled-badge {
+  border: 1px solid #d9dcf8;
+  background: #f4f5ff;
+  color: #5568d3;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .panel-mode-group,
 .panel-persona-group {
   min-width: 280px;
@@ -216,7 +241,7 @@
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   background: white;
-  max-height: 180px;
+  max-height: 128px;
   overflow-y: auto;
   padding: 0.45rem;
   display: flex;
@@ -422,6 +447,8 @@
 .container.review-mode .results-section {
   min-height: 0;
   flex: 1;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .results-header {
@@ -465,6 +492,51 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1rem;
+}
+
+.panel-code-toggle-section {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  background: #fafaff;
+}
+
+.panel-code-toggle {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #667eea;
+  text-align: left;
+  cursor: pointer;
+}
+
+.panel-code-box {
+  margin-top: 0.75rem;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.panel-code-box .code-display {
+  max-height: none;
+}
+
+.container.review-mode .panel-review-grid .review-display,
+.container.review-mode .panel-code-box .code-display {
+  max-height: none;
+  overflow-y: visible;
+}
+
+.container.review-mode .side-by-side .code-display,
+.container.review-mode .side-by-side .review-display {
+  max-height: calc(100vh - 250px);
+  min-height: 320px;
+  overflow-y: auto;
 }
 
 @media (max-width: 1024px) {
@@ -519,6 +591,46 @@
   word-wrap: break-word;
   max-height: 70vh;
   overflow-y: auto;
+}
+
+.code-display--linked {
+  padding: 0.75rem 0;
+  white-space: normal;
+}
+
+.code-line {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.12rem 1rem;
+  transition: background-color 0.15s ease;
+}
+
+.code-line.is-highlighted {
+  background: #caf1ec;
+}
+
+.code-line-number {
+  text-align: right;
+  color: #7e879f;
+  user-select: none;
+}
+
+.code-line-content {
+  white-space: pre;
+  min-width: 0;
+}
+
+.line-ref-link {
+  border: none;
+  background: transparent;
+  color: #5568d3;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
 }
 
 .review-display {
@@ -699,12 +811,27 @@
   border-color: #2f3a53;
 }
 
+.app.theme-dark .panel-code-toggle-section {
+  background: #1c2333;
+  border-color: #36405c;
+}
+
+.app.theme-dark .panel-code-toggle {
+  color: #9aa9ff;
+}
+
 .app.theme-dark .feature-history-toggle,
 .app.theme-dark .feature-history-date,
 .app.theme-dark .branding-link,
 .app.theme-dark .footer-note a,
 .app.theme-dark .custom-select-arrow {
   color: #9aa9ff;
+}
+
+.app.theme-dark .panel-enabled-badge {
+  border-color: #3a4564;
+  background: #242d44;
+  color: #c7d1ff;
 }
 
 .app.theme-dark .theme-toggle {
@@ -756,6 +883,18 @@
   color: #e6ebff;
 }
 
+.app.theme-dark .code-line.is-highlighted {
+  background: #1e5160;
+}
+
+.app.theme-dark .code-line-number {
+  color: #9ea9c8;
+}
+
+.app.theme-dark .line-ref-link {
+  color: #9aa9ff;
+}
+
 .app.theme-dark .file-upload-label,
 .app.theme-dark .btn-primary,
 .app.theme-dark .custom-select-option.selected {
@@ -776,4 +915,15 @@
 .app.theme-dark .error {
   background: #3a1f2b;
   color: #ffb3cb;
+}
+
+.persona-option-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.persona-option-checkbox {
+  width: 16px;
+  height: 16px;
 }

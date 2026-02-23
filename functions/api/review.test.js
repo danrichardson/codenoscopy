@@ -99,6 +99,11 @@ describe('POST /api/review', () => {
     const data = await response.json();
     expect(data.review).toBe('Review text');
     expect(data.persona).toBe('Security Expert');
+
+    const anthropicCall = fetch.mock.calls[0];
+    const requestBody = JSON.parse(anthropicCall[1].body);
+    expect(requestBody.messages[0].content).toContain('Citation requirements:');
+    expect(requestBody.messages[0].content).toContain('1 | print(1)');
   });
 
   it('returns stream response when stream is enabled', async () => {

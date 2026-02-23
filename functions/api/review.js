@@ -251,6 +251,13 @@ const buildDynamicSystemPrompt = (basePrompt, personaId) => {
   return `${basePrompt}\n\nDynamic review directives (vary each run):\n- Focus areas: ${selectedFocus.join('; ')}\n- Mood: ${selectedMood}\n- Format: ${selectedFormat}\n- Constraint: Keep style consistent with the persona description above.`;
 };
 
+const addLineNumbers = (code) => {
+  const lines = String(code || '').split('\n');
+  return lines
+    .map((line, index) => `${String(index + 1).padStart(4, ' ')} | ${line}`)
+    .join('\n');
+};
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -299,6 +306,7 @@ export async function onRequestPost(context) {
 
     const selectedPersona = PERSONAS[persona];
     const selectedModel = MODELS[model] || MODELS['haiku'];
+    const numberedCode = addLineNumbers(code);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -315,7 +323,18 @@ export async function onRequestPost(context) {
         messages: [
           {
             role: 'user',
-            content: `Please review the following code and provide detailed feedback. For each issue or suggestion, reference the specific line number or code section.\n\nCode to review:\n\`\`\`\n${code}\n\`\`\``
+            content: `Please review the following code and provide detailed feedback.
+
+Citation requirements:
+- Always cite exact line numbers from the numbered code below using formats like "line 42" or "lines 42-47".
+- Only cite ranges that exist in the provided numbered code.
+- When possible, include a short quoted snippet from those cited lines to justify each finding.
+
+Numbered code to review:
+
+\`\`\`
+${numberedCode}
+\`\`\``
           }
         ]
       })
@@ -361,4 +380,5 @@ export const __testOnly = {
     rateLimitStore.clear();
   },
   buildDynamicSystemPrompt,
+  addLineNumbers,
 };
