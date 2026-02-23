@@ -85,106 +85,233 @@ const TAGLINE_LEADS = [
   'Rubber-glove-ready',
   'Gown-optional',
   'No-anesthesia-needed',
-  'Prep-kit-included',
   'Scope-first, ask-later',
-  'Fiber-rich',
   'Sedation-free',
-  'Pre-screened',
   'Polyp-spotting',
-  'Turn-your-head-and-cough',
   'Waiting-room-approved',
-  'Second-opinion-worthy',
-  'Bedside-manner-optional',
   'Copay-free',
   'HIPAA-adjacent',
   'Endoscope-grade',
-  'Stat-paged',
   'Chart-topping',
-  'Vitals-stable',
   'Scrubbed-in',
-  'Nurse-practitioner-endorsed',
-  'Clipboard-wielding',
   'Triage-priority',
   'Exam-room-tested',
 ];
 
 const TAGLINE_FOCUSES = [
   'code colonoscopy',
-  'repo rectal exams',
   'git-gut health checks',
   'branch biopsy',
   'merge polyp removal',
   'dependency endoscopy',
-  'lint-ology lab work',
   'deployment stress tests',
   'commit colon cleanse',
-  'pull-request prostate checks',
   'CI/CD cardiac monitoring',
-  'architecture appendectomy',
   'production proctology',
-  'refactor recovery rooms',
   'codebase stool samples',
-  'bug triage bedpan duty',
   'sprint blood-work panels',
   'hotfix house calls',
-  'pipeline pap smears',
+  'pipeline physicals',
   'README physical therapy',
+  'refactor rehab',
 ];
 
 const TAGLINE_ENDINGS = [
   '— no prep drink required',
   '— the doctor will see your diff now',
-  '— please change into this paper gown',
   '— results in 6 to 8 business milliseconds',
   '— side effects may include cleaner code',
-  '— covered by your dad-joke insurance plan',
   '— you might feel a little pressure',
   '— don\'t worry, we\'ve seen worse',
   '— deep breath, we\'re going in',
   '— this won\'t hurt a bit (lies)',
-  '— now with 40% more bedside manner',
   '— nurse, hand me the linter',
   '— cough twice if your tests pass',
-  '— stat! (but like, chill stat)',
-  '— your codebase called, it wants a checkup',
+];
+
+const STANDALONE_TAGLINES = [
+  // ── One-liners ──
+  'AI-powered code review with personality',
+  'We look where other linters won\'t 🩺',
+  'Turning your repo sideways and saying "relax"',
+  'The only code review that asks you to count backwards from 10',
+  'Like a colonoscopy, but for your codebase — and you stay awake',
+  'Bend over, your pull request is next',
+  'You won\'t remember a thing... except the merge conflicts',
+  'Please rate your code pain on a scale of 1 to legacy',
+  'Sir, this is a code clinic',
+  'Your repo\'s vitals are... concerning',
+  'Scope goes in, insights come out — can\'t explain that',
+  'Insurance doesn\'t cover spaghetti code, but we do',
+  'The anesthesiologist says your tests are asleep already',
+  'Code review: it\'s not a tumor, it\'s a feature',
+  'Somebody page the on-call reviewer, stat',
+  'We put the "pro" in proctology and the "fun" in refactoring',
+  'Warning: may cause involuntary code cleanup',
+  'Ask your doctor if Codenoscopy is right for you',
+  'Inspecting your pipes since 2026 🔬',
+  'Where no linter has gone before',
+  'Your code is in recovery — visiting hours are 9 to 5',
+  'This procedure is covered under your GitHub plan',
+  'We found something in your repo... it\'s called "technical debt"',
+  'Just relax, the scope is only 2,000 lines long',
+  'The good news: your code compiles. The bad news: sit down.',
+  'Diagnosing spaghetti code since this morning',
+  'Codenoscopy: because "it works on my machine" isn\'t a diagnosis',
+  'Your tests came back — they\'re negative... as in, they don\'t exist',
+  'We\'re legally required to tell you about your code\'s condition',
+  'Side effects include: better code, fewer bugs, mild smugness',
+  'Rated #1 by developers who\'ve tried everything else',
+  'No appointment necessary — walk-in PRs welcome',
+  'Your codebase needs fiber. And by fiber, we mean tests.',
+  'Nurse! We\'re losing the build!',
+  'I\'m not saying your code needs surgery, but... gown up.',
+  'Codenoscopy: now accepting most insurance plans except "it\'ll be fine"',
+  'Patient presented with 47 unhandled promises',
+  'Pre-op checklist: lint, test, pray',
+  'The biopsy results are in: it\'s a monolith',
+  'We don\'t judge. Okay, we judge a little. That\'s the service.',
+  'Your code\'s blood pressure is 500/500',
+  'Recommended by 9 out of 10 rubber ducks',
+  'Somewhere between a code review and an intervention',
+  'Relax. This is a routine procedure. Probably.',
+  'You may experience mild discomfort when we find your TODOs',
+  'Code review so thorough, it found bugs in the comments',
+  'Now with 50% less judgmental sighing',
+  'The only second opinion your PR will ever need',
+  'Don\'t worry — the scope cam has night mode',
+  'Making "works on my machine" a pre-existing condition',
+  'Your code called. It wants to know what you were thinking.',
+  'Bedside manner: honest but encouraging',
+  'Professional code inspection, amateur puns — free of charge',
+  'Certified pre-owned bugs, found and catalogued',
+  'Emergency room for repos, walk-in clinic for vibes',
+  'You should be sitting down for these review results',
+  'We see dead code. It doesn\'t know it\'s dead.',
+  'This won\'t show up on your permanent record. Probably.',
+  'The attending physician recommends more unit tests',
+  'Don\'t Google your symptoms — let us diagnose your code',
+  'If your build lasts longer than 4 hours, consult a DevOps engineer',
+  'Turning caffeine into constructive criticism since 2026',
+  'Your codebase passed the physical... just barely',
+  'Prognosis: treatable, with aggressive refactoring',
+  'Warning: we may find things you didn\'t want found',
+  'The chart says "healthy" but the git blame says otherwise',
+
+  // ── Knock-knock jokes ──
+  'Knock knock. Who\'s there? Git. Git who? Git your code reviewed! 🚪',
+  'Knock knock. Who\'s there? HIPAA. HIPAA who? I can\'t tell you, it\'s private.',
+  'Knock knock. Who\'s there? Scope. Scope who? Scope-ing out your codebase! 🔭',
+  'Knock knock. Who\'s there? Merge. Merge who? Merge-ncy room — your PR is critical!',
+  'Knock knock. Who\'s there? Docker. Docker who? Docker said you need a code checkup.',
+  'Knock knock. Who\'s there? Lint. Lint who? Lint me in, I found 47 issues!',
+  'Knock knock. Who\'s there? Test. Test who? Test results are back — sit down.',
+  'Knock knock. Who\'s there? Bug. Bug who? Bug-ger, we found another one.',
+  'Knock knock. Who\'s there? Deploy. Deploy who? Deploy-d with zero tests — yikes!',
+  'Knock knock. Who\'s there? Null. Null who? Exactly — that\'s the problem.',
+  'Knock knock. Who\'s there? Recursion. Knock knock.',
+  'Knock knock. Who\'s there? Cache. Cache who? Cache me outside your codebase!',
+  'Knock knock. Who\'s there? Promise. Promise who? Promise I won\'t find any bugs? (lie)',
+  'Knock knock. Who\'s there? Async. Async who? I\'ll tell you later.',
+  'Knock knock. Who\'s there? Legacy. Legacy who? Legacy code — no one remembers why.',
+
+  // ── Medical chart entries ──
+  'Chart note: patient\'s code presents with acute over-engineering',
+  'Diagnosis: chronic callback nesting. Treatment: async/await, stat.',
+  'Dr. Codenoscopy prescribes: 200mg of refactoring, twice daily',
+  'Lab results: elevated complexity score. Recommend code diet.',
+  'Patient history: 17 Jira tickets, 0 documentation',
+  'Surgical plan: remove 3 god classes and 1 circular dependency',
+  'Nurse\'s note: patient insists "it works" despite all evidence',
+  'Vitals check: memory leaks detected, pulse rate unstable',
+  'Post-op: successfully removed nested ternary. Patient stable.',
+  'Referral: send this repo to a specialist immediately',
+  'Triage note: code arrived DOA — no tests, no types, no hope',
+  'Radiology report: X-ray reveals 14 hidden dependencies',
+  'Discharge summary: patient may resume coding with supervision',
+  'Blood type: Type-Script. Allergies: any, undefined, null',
+  'MRI scan complete: found unreachable code in 6 locations',
+
+  // ── Doctor/patient dialogues ──
+  'Doctor: "The code is stable." Patient: "...is it good?" Doctor: "I said stable."',
+  '"How long has your code had this condition?" "Since the last sprint."',
+  '"Does it hurt when I run your tests?" "I wouldn\'t know, I\'ve never run them."',
+  '"I\'m going to need you to take a deep breath and open your git log."',
+  '"On a scale of 1-10, how would you rate your code quality?" "...pass."',
+  '"The bad news is your build is broken. The good news is it was always broken."',
+  '"We need to talk about your commit messages." "...fix stuff."',
+  '"I see you\'ve been self-medicating with Stack Overflow."',
+  '"The tests are inconclusive." "There are no tests." "Hence, inconclusive."',
+  '"Your code needs rest. And by rest, I mean a REST API."',
+
+  // ── Pharmaceutical/warning label style ──
+  'CAUTION: Codenoscopy may cause sudden urge to write documentation',
+  'WARNING: Not responsible for existential crises caused by honest reviews',
+  'DOSAGE: One review per PR. Do not exceed recommended code intake.',
+  'CONTRAINDICATIONS: Should not be used with "move fast and break things"',
+  'INGREDIENTS: 40% snark, 30% insight, 20% dad jokes, 10% actual help',
+  'KEEP OUT OF REACH OF: developers who think 500-line functions are fine',
+  'MAY CONTAIN: traces of constructive criticism and medical puns',
+  'STORAGE: Keep reviews at room temperature. Do not refrigerate ego.',
+  'RECALL NOTICE: v0.1 reviews were too nice. Issue has been corrected.',
+  'CLINICAL TRIALS: 100% of subjects experienced improved code quality*',
+
+  // ── Bumper sticker / slogan style ──
+  'My other linter is a colonoscopy 🚗',
+  'Honk if your tests pass ✅',
+  'I ❤️ code that doesn\'t make me cry',
+  'My codebase went to Codenoscopy and all I got was zero bugs',
+  'Objects in the code review are worse than they appear',
+  'I brake for undefined behavior',
+  'Code happens.',
+  'Got bugs?',
+  'Don\'t blame me, I voted for TypeScript',
+  'Baby on board, legacy code in trunk',
 ];
 
 const buildTaglinePool = (targetCount = TAGLINE_POOL_SIZE) => {
-  const results = new Set([
-    'AI-powered code review with personality',
-    'We look where other linters won\'t 🩺',
-    'Turning your repo sideways and saying "relax"',
-    'The only code review that asks you to count backwards from 10',
-    'Like a colonoscopy, but for your codebase — and you stay awake',
-    'Bend over, your pull request is next',
-    'You won\'t remember a thing... except the merge conflicts',
-    'Please rate your code pain on a scale of 1 to legacy',
-    'Sir, this is a code clinic',
-    'Your repo\'s vitals are... concerning',
-    'Scope goes in, insights come out — can\'t explain that',
-    'Insurance doesn\'t cover spaghetti code, but we do',
-    'The anesthesiologist says your tests are asleep already',
-    'Code review: it\'s not a tumor, it\'s a feature',
-    'Somebody page the on-call reviewer, stat',
-    'We put the "pro" in proctology and the "fun" in refactoring',
-    'Warning: may cause involuntary code cleanup',
-    'Ask your doctor if Codenoscopy is right for you',
-    'Inspecting your pipes since 2026 🔬',
-    'Where no linter has gone before',
-  ]);
-
+  // Build all combos, then shuffle them so we don't always get the same leads first
+  const combos = [];
   for (const lead of TAGLINE_LEADS) {
     for (const focus of TAGLINE_FOCUSES) {
       for (const ending of TAGLINE_ENDINGS) {
-        results.add(`${lead} ${focus} ${ending}`);
-        if (results.size >= targetCount) {
-          return Array.from(results);
-        }
+        combos.push(`${lead} ${focus} ${ending}`);
       }
     }
   }
+  // Fisher-Yates shuffle
+  for (let i = combos.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [combos[i], combos[j]] = [combos[j], combos[i]];
+  }
 
-  return Array.from(results);
+  // Interleave: for every ~2 combos, insert 3 standalones — gives ~60% standalone hit rate
+  const standalones = [...STANDALONE_TAGLINES];
+  for (let i = standalones.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [standalones[i], standalones[j]] = [standalones[j], standalones[i]];
+  }
+
+  const pool = [];
+  let si = 0;
+  let ci = 0;
+  while (pool.length < targetCount && (si < standalones.length || ci < combos.length)) {
+    // Add up to 3 standalones
+    for (let k = 0; k < 3 && si < standalones.length && pool.length < targetCount; k++) {
+      pool.push(standalones[si++]);
+    }
+    // Add up to 2 combos
+    for (let k = 0; k < 2 && ci < combos.length && pool.length < targetCount; k++) {
+      pool.push(combos[ci++]);
+    }
+  }
+
+  // If we still need more, drain remaining combos
+  while (pool.length < targetCount && ci < combos.length) {
+    pool.push(combos[ci++]);
+  }
+
+  return pool;
 };
 
 const TAGLINE_POOL = buildTaglinePool();
@@ -1114,6 +1241,14 @@ function App() {
                 placeholder="Paste your code here..."
               />
             </div>
+            <textarea
+              className="code-input-mobile"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              onFocus={handleCodeFocus}
+              placeholder="Paste your code here..."
+              rows={10}
+            />
 
             {error && <div className="error">{error}</div>}
 
